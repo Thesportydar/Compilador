@@ -7,26 +7,30 @@ public class Main {
     private static AccionSemantica getAccionSemantica(String s) {
         // en un futuro estaria bueno implementarlo con reflexion
         switch (s) {
-            case "as0":
+            case "asm0":
                 return new AS0();
-            case "as1":
+            case "asm1":
                 return new AS1();
-            case "as2":
+            case "asm2":
                 return new AS2();
-            case "as3":
+            case "asm3":
                 return new AS3();
-            case "as4":
+            case "asm4":
                 return new AS4();
-            case "as5":
+            case "asm5":
                 return new AS5();
-            case "as6":
+            case "asm6":
                 return new AS6();
-            case "as7":
+            case "asm7":
                 return new AS7();
-            case "as8":
+            case "asm8":
                 return new AS8();
-            case "as9":
+            case "asm9":
                 return new AS9();
+            case "asm10":
+                return new AS10();
+            case "asm11":
+                return new AS11();
             default:
                 return null;
         }
@@ -35,21 +39,25 @@ public class Main {
     private static void loadMatrixs(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename) {
         try {
             Scanner scanner = new Scanner(new File(filename));
-            scanner.useDelimiter(",|\n");
+            scanner.useDelimiter(";");
 
             for (int row = 0; row < mI.getRows(); row++)
                 for (int column = 0; column < mI.getColumns(); column++)
                 {
                     String value = scanner.next();
-                    String[] values = value.split("\\|");
-                    mI.set(row, column, Integer.parseInt(values[0]));
+                    
+                    if (!value.equals("null")) {
+                        String[] values = value.split("\\|");
+                        mI.set(row, column, Integer.parseInt(values[0]));
 
-                    try {
-                        mA.set(row, column, getAccionSemantica(values[1]));
-                    } catch (ArrayIndexOutOfBoundsException e) {
-                        throw new ArrayIndexOutOfBoundsException("Error en la matriz de acciones semanticas: " + e.getMessage());
+                        if (values.length > 1) {
+                            try {
+                                mA.set(row, column, getAccionSemantica(values[1]));
+                            } catch (ArrayIndexOutOfBoundsException e) {
+                                throw new ArrayIndexOutOfBoundsException("Error en la matriz de acciones semanticas: " + e.getMessage());
+                            }
+                        }
                     }
-
                 }
 
             scanner.close();
@@ -59,8 +67,8 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        TransitionMatrix<Integer> mI = new TransitionMatrix<>(3, 3);
-        TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(3, 3);
+        TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 29);
+        TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 29);
         loadMatrixs(mI, mA, "test.csv");
 
         System.out.println(mI);
@@ -68,6 +76,7 @@ public class Main {
         //for each one xall ejecutar
         for (int row = 0; row < mI.getRows(); row++)
             for (int column = 0; column < mI.getColumns(); column++)
-                mA.get(row, column).ejecutar("AS"+column, 'c');
+                if (mA.get(row, column) != null)
+                    mA.get(row, column).ejecutar("AS"+column, 'c');
     }
 }
