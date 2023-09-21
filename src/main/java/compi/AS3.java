@@ -1,8 +1,12 @@
 package compi;
 
 public class AS3 implements AccionSemantica {
+    private TS ts;
+    public AS3(TS ts) {
+        this.ts = ts;
+    }
     @Override
-    public void ejecutar(String buffer, char c) {
-        System.out.println("AS3: " + buffer + " " + c);
+    public boolean ejecutar(StringBuffer buffer, char c) {
+
     }
 }

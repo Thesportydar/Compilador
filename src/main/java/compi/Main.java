@@ -67,8 +67,8 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 29);
-        TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 29);
+        TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 28);
+        TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 28);
         loadMatrixs(mI, mA, "test.csv");
 
         System.out.println(mI);

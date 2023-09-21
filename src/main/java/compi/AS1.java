@@ -2,7 +2,8 @@ package compi;
 
 public class AS1 implements AccionSemantica {
     @Override
-    public void ejecutar(String buffer, char c) {
-        System.out.println("AS1: " + buffer + " " + c);
+    public boolean ejecutar(StringBuffer lexema, char c) {
+        lexema.append(c);
+        return true;
     }
 }

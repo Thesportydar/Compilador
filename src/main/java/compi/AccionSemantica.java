@@ -1,5 +1,5 @@
 package compi;
 
 public interface AccionSemantica {
-    public void ejecutar(String buffer, char c);
+    public boolean ejecutar(StringBuffer buffer, char c);
 }
