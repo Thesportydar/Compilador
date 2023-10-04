@@ -9,6 +9,7 @@ public class LexicalAnalyzer {
     private TransitionMatrix<Integer> stateMatrix;
     private TransitionMatrix<AccionSemantica> accionMatrix;
     static final int ESTADO_FINAL = 100;
+    Integer TOKEN_RESERVED_WORD = 258;
     int currentChar;
 
     HashMap<Character, Integer> charMap;
@@ -84,7 +85,7 @@ public class LexicalAnalyzer {
     }
 
     private int returnToken(int nextState, StringBuffer lexema) {
-        if (nextState == 121)
+        if (nextState == TOKEN_RESERVED_WORD)
             return RESERVED_WORDS.get(lexema.toString());
         else
             return nextState - 100;

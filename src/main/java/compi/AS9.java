@@ -10,9 +10,9 @@ public class AS9 implements AccionSemantica {
         String word = buffer.toString();
         for (String reservedWord : reservedWords)
             if (word.equals(reservedWord))
-                return true;
+                return false;
 
         System.out.println("Palabra reservada no reconocida: " + word);
-        return true;
+        return false;
     }
 }
