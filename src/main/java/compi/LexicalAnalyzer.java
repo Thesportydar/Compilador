@@ -29,7 +29,7 @@ public class LexicalAnalyzer {
             charMap = new HashMap<Character, Integer>();
             RESERVED_WORDS = new HashMap<String, Integer>();
             loadCharMap(charMap, charmap_file);
-            charMap.put('\r', 2);
+            charMap.put('\r', 23);
             loadReservedWords(RESERVED_WORDS, reserved_words_file);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -100,8 +100,6 @@ public class LexicalAnalyzer {
                 return ' ';
             case "<TAB>":
                 return '\t';
-            case "<EOF>":
-                return '\0';
             case "<COMMA>":
                 return ',';
             default:
@@ -123,7 +121,7 @@ public class LexicalAnalyzer {
                     c = s.charAt(0);
 
                 int mappedChar = scanner.nextInt();
-                System.out.println("&" + c + "-" + mappedChar + "&");
+                //print mappedChar and the type of the class of mappedChar
                 map.put(c, mappedChar);
             }
         } catch (FileNotFoundException e) {
@@ -134,7 +132,7 @@ public class LexicalAnalyzer {
     private void loadReservedWords(HashMap<String, Integer> map, String file) {
         try {
             Scanner scanner = new Scanner(new File(file));
-            scanner.useDelimiter(",|\n");
+            scanner.useDelimiter(",|\n|\r");
 
             while (scanner.hasNext()) {
                 String s = scanner.next();
