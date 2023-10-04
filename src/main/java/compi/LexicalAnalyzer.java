@@ -1,8 +1,8 @@
 package compi;
 
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
+import java.util.Scanner;
 
 public class LexicalAnalyzer {
     private FileReader reader;
@@ -10,7 +10,13 @@ public class LexicalAnalyzer {
     private TransitionMatrix<AccionSemantica> accionMatrix;
     static final int ESTADO_FINAL = 100;
     int currentChar;
-    HashMap<Character, Integer> charMap = new HashMap<Character, Integer>();
+
+    HashMap<Character, Integer> charMap;
+    HashMap<String, Integer> RESERVED_WORDS;
+
+    static final String charmap_file = "char_map.csv";
+    static final String reserved_words_file = "reserved_words.csv";
+
 
     public LexicalAnalyzer(String sourceFile, TransitionMatrix<Integer> stateMatrix,
             TransitionMatrix<AccionSemantica> accionMatrix) {
@@ -20,7 +26,10 @@ public class LexicalAnalyzer {
         try {
             reader = new FileReader(sourceFile);
             currentChar = reader.read();
-            loadCharMap();
+            charMap = new HashMap<Character, Integer>();
+            RESERVED_WORDS = new HashMap<String, Integer>();
+            loadHashMap(charMap, charmap_file);
+            loadHashMap(RESERVED_WORDS, reserved_words_file);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -46,7 +55,7 @@ public class LexicalAnalyzer {
                 if (leer)
                     currentChar = reader.read();
 
-                return new Token(returnToken(currentCharacter), lexema.toString());
+                return new Token(returnToken(nextState, lexema), lexema.toString());
             }
 
             // actualizar estado
@@ -58,6 +67,10 @@ public class LexicalAnalyzer {
 
     private Boolean executeAction(int state, char character, StringBuffer lexema) {
         AccionSemantica action = accionMatrix.get(state, mapChar(character));
+
+        if (action == null)
+            return true;
+
         return action.ejecutar(lexema, character);
     }
 
@@ -69,93 +82,53 @@ public class LexicalAnalyzer {
         return charMap.get(character);
     }
 
-    private int returnToken(int mappedChar) {
-        return mappedChar - 100;
+    private int returnToken(int nextState, StringBuffer lexema) {
+        if (nextState == 121)
+            return RESERVED_WORDS.get(lexema.toString());
+        else
+            return nextState - 100;
     }
 
-    private void loadCharMap() {
-        charMap.put('0', 0);
-        charMap.put('1', 0);
-        charMap.put('2', 0);
-        charMap.put('3', 0);
-        charMap.put('4', 0);
-        charMap.put('5', 0);
-        charMap.put('6', 0);
-        charMap.put('7', 0);
-        charMap.put('8', 0);
-        charMap.put('9', 0);
-        charMap.put('.', 1);
-        charMap.put('_', 2);
-        charMap.put('u', 3);
-        charMap.put('s', 4);
-        charMap.put('i', 5);
-        charMap.put('e', 6);
-        charMap.put('E', 7);
-        charMap.put('+', 8);
-        charMap.put('-', 9);
-        charMap.put('*', 10);
-        charMap.put('/', 11);
-        charMap.put('<', 12);
-        charMap.put('>', 13);
-        charMap.put('=', 14);
-        charMap.put('!', 15);
-        charMap.put('(', 16);
-        charMap.put(')', 17);
-        charMap.put('{', 18);
-        charMap.put('}', 19);
-        charMap.put(',', 20);
-        charMap.put(';', 21);
-        charMap.put('#', 22);
-        charMap.put('\n', 23);
-        charMap.put('\r', 23);
-        charMap.put(' ', 24);
-        charMap.put('\t', 25);
-        charMap.put('A', 26);
-        charMap.put('B', 26);
-        charMap.put('C', 26);
-        charMap.put('D', 26);
-        charMap.put('F', 26);
-        charMap.put('G', 26);
-        charMap.put('H', 26);
-        charMap.put('I', 26);
-        charMap.put('J', 26);
-        charMap.put('K', 26);
-        charMap.put('L', 26);
-        charMap.put('M', 26);
-        charMap.put('N', 26);
-        charMap.put('O', 26);
-        charMap.put('P', 26);
-        charMap.put('Q', 26);
-        charMap.put('R', 26);
-        charMap.put('S', 26);
-        charMap.put('T', 26);
-        charMap.put('U', 26);
-        charMap.put('V', 26);
-        charMap.put('W', 26);
-        charMap.put('X', 26);
-        charMap.put('Y', 26);
-        charMap.put('Z', 26);
-        charMap.put('a', 27);
-        charMap.put('b', 27);
-        charMap.put('c', 27);
-        charMap.put('d', 27);
-        charMap.put('f', 27);
-        charMap.put('g', 27);
-        charMap.put('h', 27);
-        charMap.put('j', 27);
-        charMap.put('k', 27);
-        charMap.put('l', 27);
-        charMap.put('m', 27);
-        charMap.put('n', 27);
-        charMap.put('o', 27);
-        charMap.put('p', 27);
-        charMap.put('q', 27);
-        charMap.put('r', 27);
-        charMap.put('t', 27);
-        charMap.put('v', 27);
-        charMap.put('w', 27);
-        charMap.put('x', 27);
-        charMap.put('y', 27);
-        charMap.put('z', 27);
+    private String verifySpecialChar(String character) {
+        switch(character) {
+            case "<":
+                return "<";
+            case "<EOL>":
+                return "\n";
+            case "<SPACE>":
+                return " ";
+            case "<TAB>":
+                return "\t";
+            case "<EOF>":
+                return "\0";
+            case "<COMMA>":
+                return ",";
+            default:
+                return "";
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void loadHashMap(HashMap<T, Integer> map, String file) {
+        try {
+            Scanner scanner = new Scanner(new File(file));
+            scanner.useDelimiter(",|\n");
+
+            while (scanner.hasNext()) {
+                String character = scanner.next();
+                if (character.charAt(0) == '<')
+                    character = verifySpecialChar(character);
+
+                int mappedChar = scanner.nextInt();
+                T key = (T) character;
+                System.out.println(key + "@" + mappedChar);
+                map.put(key, mappedChar);
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+    public static void main(String[] args) {
+        LexicalAnalyzer analyzer = new LexicalAnalyzer("test.csv", null, null);
     }
 }

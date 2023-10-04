@@ -16,4 +16,8 @@ public class Token {
     public String getLexema() {
         return lexema;
     }
+
+    public String toString() {
+        return "Token: " + id + " - " + lexema;
+    }
 }

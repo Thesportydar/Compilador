@@ -1,0 +1,3 @@
+IF{
+    variable1 = 234_s;
+}END_IF

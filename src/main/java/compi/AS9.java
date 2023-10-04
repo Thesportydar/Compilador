@@ -1,8 +1,18 @@
 package compi;
 
 public class AS9 implements AccionSemantica {
+    // dictionary with reserved words
+    static final String[] reservedWords = {
+        "IF", "ELSE", "END_IF", "PRINT", "CLASS", "VOID", "WHILE", "DO", "SHORT", "UINT", "FLOAT"
+    };
     @Override
-    public void ejecutar(String buffer, char c) {
-        System.out.println("AS9: " + buffer + " " + c);
+    public boolean ejecutar(StringBuffer buffer, char c) {
+        String word = buffer.toString();
+        for (String reservedWord : reservedWords)
+            if (word.equals(reservedWord))
+                return true;
+
+        System.out.println("Palabra reservada no reconocida: " + word);
+        return true;
     }
 }
