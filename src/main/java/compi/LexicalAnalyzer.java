@@ -28,8 +28,9 @@ public class LexicalAnalyzer {
             currentChar = reader.read();
             charMap = new HashMap<Character, Integer>();
             RESERVED_WORDS = new HashMap<String, Integer>();
-            loadHashMap(charMap, charmap_file);
-            loadHashMap(RESERVED_WORDS, reserved_words_file);
+            loadCharMap(charMap, charmap_file);
+            charMap.put('\r', 2);
+            loadReservedWords(RESERVED_WORDS, reserved_words_file);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -89,45 +90,62 @@ public class LexicalAnalyzer {
             return nextState - 100;
     }
 
-    private String verifySpecialChar(String character) {
+    private Character verifySpecialChar(String character) {
         switch(character) {
             case "<":
-                return "<";
+                return '<';
             case "<EOL>":
-                return "\n";
+                return '\n';
             case "<SPACE>":
-                return " ";
+                return ' ';
             case "<TAB>":
-                return "\t";
+                return '\t';
             case "<EOF>":
-                return "\0";
+                return '\0';
             case "<COMMA>":
-                return ",";
+                return ',';
             default:
-                return "";
+                return null;
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> void loadHashMap(HashMap<T, Integer> map, String file) {
+    private void loadCharMap(HashMap<Character, Integer> map, String file) {
         try {
             Scanner scanner = new Scanner(new File(file));
-            scanner.useDelimiter(",|\n");
+            scanner.useDelimiter(",|\n|\r");
 
             while (scanner.hasNext()) {
-                String character = scanner.next();
-                if (character.charAt(0) == '<')
-                    character = verifySpecialChar(character);
+                String s = scanner.next();
+                Character c;
+                if (s.charAt(0) == '<')
+                    c = verifySpecialChar(s);
+                else
+                    c = s.charAt(0);
 
                 int mappedChar = scanner.nextInt();
-                T key = (T) character;
-                System.out.println(key + "@" + mappedChar);
-                map.put(key, mappedChar);
+                System.out.println("&" + c + "-" + mappedChar + "&");
+                map.put(c, mappedChar);
             }
         } catch (FileNotFoundException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
+
+    private void loadReservedWords(HashMap<String, Integer> map, String file) {
+        try {
+            Scanner scanner = new Scanner(new File(file));
+            scanner.useDelimiter(",|\n");
+
+            while (scanner.hasNext()) {
+                String s = scanner.next();
+                int mappedChar = scanner.nextInt();
+                map.put(s, mappedChar);
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
     public static void main(String[] args) {
         LexicalAnalyzer analyzer = new LexicalAnalyzer("test.csv", null, null);
     }

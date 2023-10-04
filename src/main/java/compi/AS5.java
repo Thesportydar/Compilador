@@ -16,7 +16,6 @@ public class AS5 implements AccionSemantica {
     @Override
     public boolean ejecutar(StringBuffer buffer, char c) {
         // buffer is a short int. check range
-        System.out.println("AS5: " + buffer.toString());
         int value = Integer.parseInt(buffer.toString());
         if (value > RANGE) {
             System.out.println("Error: " + DESC + " out of range (" + RANGE + ")");

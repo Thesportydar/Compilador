@@ -25,8 +25,6 @@ public class Main {
                 return new AS8();
             case "asm9":
                 return new AS9();
-            case "asm10":
-                return new AS10();
             case "asm11":
                 return new AS11(st);
             default:
@@ -71,7 +69,7 @@ public class Main {
         do {
             try {
                 token = la.nextToken();
-                System.out.println(token);
+                System.out.println("+-" + token + "-+");
             } catch (IOException e) {
                 System.out.println("Error: " + e.getMessage());
             }
