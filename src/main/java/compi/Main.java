@@ -16,9 +16,9 @@ public class Main {
             case "asm4":
                 return new AS1();
             case "asm5":
-                return new AS5(st, 32767, "shortint", 1);
+                return new AS5(st, 32767, "shortint", 269);
             case "asm6":
-                return new AS5(st, 65535, "uint", 33);
+                return new AS5(st, 65535, "uint", 270);
             case "asm7":
                 return new AS7(st);
             case "asm8":
@@ -64,7 +64,7 @@ public class Main {
 
     public static void parser(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename, SymbolTable st) {
         LexicalAnalyzer la = new LexicalAnalyzer(filename, mI, mA);
-        Token token = null;
+        Integer token = 0;
 
         do {
             try {
@@ -73,8 +73,9 @@ public class Main {
             } catch (IOException e) {
                 System.out.println("Error: " + e.getMessage());
             }
-        } while (token != null);
+        } while (token != 0);
     }
+
     public static void main(String[] args) {
         TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 28);
         TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 28);

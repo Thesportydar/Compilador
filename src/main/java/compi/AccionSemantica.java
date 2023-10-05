@@ -1,5 +1,6 @@
 package compi;
 
 public interface AccionSemantica {
-    public boolean ejecutar(StringBuffer buffer, char c);
+    public Integer ejecutar(StringBuffer buffer, char c);
+    public Boolean leer();
 }

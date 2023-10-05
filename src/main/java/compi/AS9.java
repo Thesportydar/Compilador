@@ -6,13 +6,18 @@ public class AS9 implements AccionSemantica {
         "IF", "ELSE", "END_IF", "PRINT", "CLASS", "VOID", "WHILE", "DO", "SHORT", "UINT", "FLOAT"
     };
     @Override
-    public boolean ejecutar(StringBuffer buffer, char c) {
+    public Integer ejecutar(StringBuffer buffer, char c) {
         String word = buffer.toString();
         for (String reservedWord : reservedWords)
             if (word.equals(reservedWord))
-                return false;
+                return 0;
 
         System.out.println("Palabra reservada no reconocida: " + word);
+        return -1;
+    }
+
+    @Override
+    public Boolean leer() {
         return false;
     }
 }

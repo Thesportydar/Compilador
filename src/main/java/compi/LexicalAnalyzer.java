@@ -27,57 +27,51 @@ public class LexicalAnalyzer {
         try {
             reader = new FileReader(sourceFile);
             currentChar = reader.read();
+
             charMap = new HashMap<Character, Integer>();
             RESERVED_WORDS = new HashMap<String, Integer>();
+
             loadCharMap(charMap, charmap_file);
-            charMap.put('\r', 23);
             loadReservedWords(RESERVED_WORDS, reserved_words_file);
+
+            //charMap.put('\r', 23);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
-    public Token nextToken() throws IOException {
+    public Integer nextToken() throws IOException {
         StringBuffer lexema = new StringBuffer();
         int state=0, nextState, currentMappedChar;
         Boolean leer = true;
+        Integer ptr;
+        AccionSemantica action;
     
         while(currentChar != -1) {
             char currentCharacter = (char) currentChar;
             currentMappedChar = mapChar(currentCharacter);
 
             // nuevo estado
-            nextState = transition(state, currentMappedChar);
+            nextState = stateMatrix.get(state, currentMappedChar);
 
             // accion semantica
-            leer = executeAction(state, currentCharacter, lexema);
+            action = accionMatrix.get(state, mapChar(currentCharacter));
+            if (action != null)
+                ptr = action.ejecutar(lexema, currentCharacter);
 
             // mira que el estado sea final
             if (nextState >= ESTADO_FINAL) {
-                if (leer)
+                if (action == null || action.leer())
                     currentChar = reader.read();
 
-                return new Token(returnToken(nextState, lexema), lexema.toString());
+                return returnToken(nextState, lexema);
             }
 
             // actualizar estado
             state = nextState;
             currentChar = reader.read();
         }
-        return null;
-    }
-
-    private Boolean executeAction(int state, char character, StringBuffer lexema) {
-        AccionSemantica action = accionMatrix.get(state, mapChar(character));
-
-        if (action == null)
-            return true;
-
-        return action.ejecutar(lexema, character);
-    }
-
-    private int transition(int state, int mappedChar) {
-        return stateMatrix.get(state, mappedChar);
+        return 0;
     }
 
     private int mapChar(char character) {
@@ -87,8 +81,10 @@ public class LexicalAnalyzer {
     private int returnToken(int nextState, StringBuffer lexema) {
         if (nextState == TOKEN_RESERVED_WORD)
             return RESERVED_WORDS.get(lexema.toString());
-        else
+        else if (nextState < TOKEN_RESERVED_WORD-1)
             return nextState - 100;
+        else
+            return nextState;
     }
 
     private Character verifySpecialChar(String character) {
