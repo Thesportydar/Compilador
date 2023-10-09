@@ -1,4 +1,4 @@
-package compi;
+package compi.AccionesSemanticas;
 
 public class AS9 implements AccionSemantica {
     // dictionary with reserved words

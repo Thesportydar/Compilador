@@ -1,4 +1,4 @@
-package compi;
+package compi.AccionesSemanticas;
 
 public interface AccionSemantica {
     public Integer ejecutar(StringBuffer buffer, char c);

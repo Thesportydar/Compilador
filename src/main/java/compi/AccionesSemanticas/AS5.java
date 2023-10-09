@@ -1,4 +1,5 @@
-package compi;
+package compi.AccionesSemanticas;
+import compi.SymbolTable;
 
 public class AS5 implements AccionSemantica {
     private SymbolTable st;

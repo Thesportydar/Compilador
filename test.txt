@@ -1,3 +1,54 @@
-IF{
-    variable1 = 234_s;
-}END_IF
+{
+    IF (var1 == var2)
+    {
+        var1 = 1_s,
+        var2 = var1 * 2_s,
+        var3 = var1 + var2,
+    }
+    ELSE
+        PRINT #Hola mundo# ,
+    END_IF,
+    
+    WHILE (var1 < var2) DO
+    {
+        var1 = var1 + 1_s,
+        var2 = var2 - 1_s,
+    },
+
+    CLASS clase1
+    {
+        SHORT var1,
+        UINT var2,
+        FLOAT var3,
+    }
+    CLASS clase2,
+
+    VOID fun1 (SHORT p1)
+    {
+        PRINT #Hola mundo2# ,
+    }
+
+    VOID fun2 ()
+    {
+        PRINT #Hola mundo2# ,
+    }
+
+    VOID fun3 (FLOAT p2)
+    {
+        SHORT var1,
+        RETURN,
+    }
+
+    CLASS clase2
+    {
+        FLOAT var3,
+        VOID met1 ()
+        {
+            PRINT #Hola mundo2# ,
+        }
+    }
+    fun2(),
+    clase2.met1(),
+    clase2.met1(var1),
+    fun3(1.0),
+}

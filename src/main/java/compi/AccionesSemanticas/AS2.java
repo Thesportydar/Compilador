@@ -1,4 +1,4 @@
-package compi;
+package compi.AccionesSemanticas;
 
 public class AS2 implements AccionSemantica {
     @Override

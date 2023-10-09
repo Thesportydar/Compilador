@@ -1,4 +1,5 @@
-package compi;
+package compi.AccionesSemanticas;
+import compi.SymbolTable;
 
 public class AS7 implements AccionSemantica {
     final float RANGE = 3.4028235E38f;

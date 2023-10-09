@@ -1,4 +1,5 @@
-package compi;
+package compi.AccionesSemanticas;
+import compi.SymbolTable;
 
 public class AS11 implements AccionSemantica {
     private SymbolTable st;
@@ -15,6 +16,6 @@ public class AS11 implements AccionSemantica {
 
     @Override
     public Boolean leer() {
-        return false;
+        return true;
     }
 }

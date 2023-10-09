@@ -3,6 +3,7 @@ package compi;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Scanner;
+import compi.AccionesSemanticas.AccionSemantica;
 
 public class LexicalAnalyzer {
     private FileReader reader;

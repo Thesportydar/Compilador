@@ -2,9 +2,10 @@ package compi;
 
 import java.io.*;
 import java.util.Scanner;
+import compi.AccionesSemanticas.*;
 
 public class Main {
-    private static AccionSemantica getAccionSemantica(String s, SymbolTable st) {
+    public static AccionSemantica getAccionSemantica(String s, SymbolTable st) {
         // en un futuro estaria bueno implementarlo con reflexion
         switch (s) {
             case "asm1":
@@ -32,7 +33,7 @@ public class Main {
         }
     }
 
-    private static void loadMatrixs(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename, SymbolTable st) {
+    public static void loadMatrixs(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename, SymbolTable st) {
         try {
             Scanner scanner = new Scanner(new File(filename));
             scanner.useDelimiter(";");
