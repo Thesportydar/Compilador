@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Scanner;
 import compi.AccionesSemanticas.AccionSemantica;
+import compi.Parser.ParserVal;
 
 public class LexicalAnalyzer {
     private FileReader reader;
@@ -11,7 +12,7 @@ public class LexicalAnalyzer {
     private TransitionMatrix<AccionSemantica> accionMatrix;
     static final int ESTADO_FINAL = 100;
     Integer TOKEN_RESERVED_WORD = 258;
-    int currentChar;
+    int currentChar, linea, ptrActual;
 
     HashMap<Character, Integer> charMap;
     HashMap<String, Integer> RESERVED_WORDS;
@@ -24,6 +25,8 @@ public class LexicalAnalyzer {
             TransitionMatrix<AccionSemantica> accionMatrix) {
         this.stateMatrix = stateMatrix;
         this.accionMatrix = accionMatrix;
+        linea = 1;
+        ptrActual = 0;
 
         try {
             reader = new FileReader(sourceFile);
@@ -41,16 +44,23 @@ public class LexicalAnalyzer {
         }
     }
 
+    public int getLine() {
+        return linea;
+    }
+
     public Integer nextToken() throws IOException {
         StringBuffer lexema = new StringBuffer();
         int state=0, nextState, currentMappedChar;
         Boolean leer = true;
-        Integer ptr;
+        Integer ptr = 0;
         AccionSemantica action;
     
         while(currentChar != -1) {
             char currentCharacter = (char) currentChar;
             currentMappedChar = mapChar(currentCharacter);
+
+            if (currentMappedChar == 23)
+                linea++;
 
             // nuevo estado
             nextState = stateMatrix.get(state, currentMappedChar);
@@ -62,10 +72,17 @@ public class LexicalAnalyzer {
 
             // mira que el estado sea final
             if (nextState >= ESTADO_FINAL) {
+                Integer tkDetectado = returnToken(nextState, lexema);
+                
                 if (action == null || action.leer())
                     currentChar = reader.read();
 
-                return returnToken(nextState, lexema);
+                if (ptr > 0)
+                    ptrActual = ptr;
+                else
+                    ptrActual = 0;
+
+                return tkDetectado;
             }
 
             // actualizar estado
@@ -86,6 +103,10 @@ public class LexicalAnalyzer {
             return nextState - 100;
         else
             return nextState;
+    }
+
+    public int getPtrActual() {
+        return ptrActual;
     }
 
     private Character verifySpecialChar(String character) {
@@ -125,6 +146,14 @@ public class LexicalAnalyzer {
         } catch (FileNotFoundException e) {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    public String getReservedWord(int token) {
+        for (String key : RESERVED_WORDS.keySet()) {
+            if (RESERVED_WORDS.get(key) == token)
+                return key;
+        }
+        return null;
     }
 
     private void loadReservedWords(HashMap<String, Integer> map, String file) {

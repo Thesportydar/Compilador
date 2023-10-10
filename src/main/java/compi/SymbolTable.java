@@ -10,7 +10,11 @@ public class SymbolTable {
     private class SymbolTableEntry {
         private int tokenId;
         private String lexema;
-        private String description;
+        private HashMap<String, String> attributes;
+
+        public SymbolTableEntry() {
+            attributes = new HashMap<String, String>();
+        }
     }
 
     public SymbolTable() {
@@ -22,21 +26,30 @@ public class SymbolTable {
         SymbolTableEntry entry = new SymbolTableEntry();
         entry.tokenId = tokenId;
         entry.lexema = lexema;
-        entry.description = description;
+        entry.attributes.put("description", description);
         symbolTable.put(nextPtr, entry);
         return ++nextPtr;
     }
 
     public int getTokenId(Integer ptr) {
-        return symbolTable.get(ptr).tokenId;
+        SymbolTableEntry entry = symbolTable.get(ptr);
+        if (entry == null)
+            return -1;
+        return entry.tokenId;
     }
 
     public String getLexema(Integer ptr) {
-        return symbolTable.get(ptr).lexema;
+        SymbolTableEntry entry = symbolTable.get(ptr);
+        if (entry == null)
+            return null;
+        return entry.lexema;
     }
 
     public String getDescription(String lexema) {
-        return symbolTable.get(lexema).description;
+        SymbolTableEntry entry = symbolTable.get(getPtr(lexema));
+        if (entry == null)
+            return null;
+        return entry.attributes.get("description");
     }
 
     public boolean contains(String lexema) {
@@ -59,11 +72,29 @@ public class SymbolTable {
         return 0;
     }
 
+    public boolean setDescription(Integer ptr, String description) {
+        SymbolTableEntry entry = symbolTable.get(ptr);
+        if (entry == null)
+            return false;
+
+        entry.attributes.put("description", description);
+        return true;
+    }
+
+    public boolean setLexema(Integer ptr, String lexema) {
+        SymbolTableEntry entry = symbolTable.get(ptr);
+        if (entry == null)
+            return false;
+
+        entry.lexema = lexema;
+        return true;
+    }
+
     public void print() {
         System.out.println("Semantic Table:");
         System.out.println("Ptr\tLexema\tTokenId\tDescription");
         for (HashMap.Entry<Integer, SymbolTableEntry> entry : symbolTable.entrySet()) {
-            System.out.println(entry.getKey() + "\t" + entry.getValue().lexema + "\t" + entry.getValue().tokenId + "\t" + entry.getValue().description);
+            System.out.println(entry.getKey() + "\t" + entry.getValue().lexema + "\t" + entry.getValue().tokenId + "\t" + entry.getValue().attributes.get("description"));
         }
     }
 }

@@ -1,5 +1,7 @@
 %{
-package compi;
+package compi.Parser;
+import compi.AccionesSemanticas.AccionSemantica;
+import compi.*;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -37,37 +39,40 @@ tipo                 : SHORT
                      | FLOAT
                      ;
 
-CTE                  : CTE_SHORT
-                     | CTE_UINT
-                     | CTE_FLOAT
+CTE                  : CTE_SHORT     {resolverCTE($1.ival);}
+                     | CTE_UINT      {resolverCTE($1.ival);}
+                     | CTE_FLOAT     {resolverCTE($1.ival);}
+                     | '-' CTE_SHORT {resolverSigno($2.ival); verificarRango($2.ival);}
+                     | '-' CTE_UINT  {resolverSigno($2.ival); verificarRango($2.ival);}
+                     | '-' CTE_FLOAT {resolverSigno($2.ival); verificarRango($2.ival);}
                      ;
 
 list_var             : list_var ';' ID
                      | ID
                      ;
 
-funcion              : VOID ID '(' parametro ')' '{' cuerpo_funcion '}'
-                     | VOID ID '(' ')' '{' cuerpo_funcion '}'
-                     //| VOID ID '(' parametro ')' '{' cuerpo_funcion       {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final de la función");}
-                     //| VOID ID '(' ')' '{' cuerpo_funcion                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final de la función");}
+funcion              : VOID ID '(' parametro ')' '{' cuerpo_funcion '}'   { agregarFuncion($2, $1, $4); }
+                     | VOID ID '(' ')' '{' cuerpo_funcion '}'             { agregarFuncion($2, $1, null); }
+                     /*| VOID ID '(' parametro ')' '{' cuerpo_funcion       {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final de la función");}*/
+                     /*| VOID ID '(' ')' '{' cuerpo_funcion                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final de la función");}*/
                      | VOID ID '(' parametro ')' cuerpo_funcion '}'       {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al comienzo de la función");}
                      | VOID ID '(' ')' cuerpo_funcion '}'                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al comienzo de la función");}
                      ;
 
-parametro            : tipo ID
+parametro            : tipo ID              { agregarParametro($2, $1); }
                      | tipo                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un identificador");}
                      | ID                   {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el tipo del parametro");}
                      ;
 
-cuerpo_funcion       : cuerpo_funcion sen_declarativa sen_retorno
-                     | cuerpo_funcion sen_ejecutable sen_retorno
+cuerpo_funcion       : cuerpo_funcion sen_declarativa sen_retorno ','
+                     | cuerpo_funcion sen_ejecutable sen_retorno ','
                      | cuerpo_funcion sen_ejecutable
-                     | sen_declarativa sen_retorno
-                     | sen_ejecutable sen_retorno
+                     | sen_declarativa sen_retorno ','
+                     | sen_ejecutable sen_retorno ','
                      | sen_ejecutable
                      ;
 
-sen_retorno          : RETURN ','
+sen_retorno          : RETURN
                      ;
 
                      // deberian ir sentencias declarativas
@@ -83,7 +88,7 @@ sen_ejecutable       : asignacion ','
                      //| inv_metodo                {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una coma al final de la sentencia ejecutable");}
                      ;
 
-asignacion           : ID '=' exp_aritmetica
+asignacion           : ID '=' exp_aritmetica            {agregarEstructura("Asignacion al identificador " + $1);}
                      | atributo_clase '=' exp_aritmetica
                      //| ID '='                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una expresión aritmética");}
                      | '=' exp_aritmetica               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un identificador");}
@@ -92,16 +97,16 @@ asignacion           : ID '=' exp_aritmetica
                      | atributo_clase exp_aritmetica    {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un signo igual");}
                      ;
 
-inv_funcion          : ID '(' exp_aritmetica ')'
-                     | ID '(' ')'
+inv_funcion          : ID '(' exp_aritmetica ')'        {agregarEstructura("Invocacion a la funcion " + $1);}
+                     | ID '(' ')'                       {agregarEstructura("Invocacion a la funcion " + $1);}
                      | ID '(' exp_aritmetica            {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | ID exp_aritmetica ')'            {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      //| ID ')'                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      //| ID '('                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;
 
-inv_metodo           : atributo_clase '(' exp_aritmetica ')'
-                     | atributo_clase '(' ')'
+inv_metodo           : atributo_clase '(' exp_aritmetica ')' {agregarEstructura("Invocacion al metodo " + $1);}
+                     | atributo_clase '(' ')'                {agregarEstructura("Invocacion al metodo " + $1);}
                      | atributo_clase '('               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | atributo_clase ')'               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;
@@ -109,8 +114,8 @@ inv_metodo           : atributo_clase '(' exp_aritmetica ')'
 atributo_clase       : ID '.' ID
                      ;
 
-seleccion            : IF '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF
-                     | IF '(' condicion ')' bloque_sen_ejecutable END_IF
+seleccion            : IF '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF {agregarEstructura($1);}
+                     | IF '(' condicion ')' bloque_sen_ejecutable END_IF {agregarEstructura($1);}
                      | IF '(' condicion ')' ELSE bloque_sen_ejecutable END_IF {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
                      | IF '(' condicion ')' bloque_sen_ejecutable ELSE END_IF {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
                      | IF '(' condicion ')' END_IF  {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
@@ -129,11 +134,11 @@ exp_aritmetica       : exp_aritmetica '+' termino
                      | exp_aritmetica '-' termino
                      | termino
                      | exp_aritmetica '+' '+' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
-                     | exp_aritmetica '+' '' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
+                     | exp_aritmetica '+' '*' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
                      | exp_aritmetica '+' '/' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
-                     | exp_aritmetica '+' '-' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
+                     /*| exp_aritmetica '+' '-' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}*/
                      | exp_aritmetica '-' '+' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
-                     | exp_aritmetica '-' '-' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
+                     /*| exp_aritmetica '-' '-' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}*/
                      | exp_aritmetica '-' '' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
                      | exp_aritmetica '-' '/' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
                      ;
@@ -185,20 +190,20 @@ sen_ejecutable_r     : sen_ejecutable_r sen_ejecutable
                      | sen_ejecutable
                      ;
 
-imprimir             : PRINT STR_1LN
+imprimir             : PRINT STR_1LN             {agregarEstructura($1);}
                      | PRINT ','                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una cadena para imprimir");}
                      ;
 
-sen_control          : WHILE '(' condicion ')' DO bloque_sen_ejecutable ','
+sen_control          : WHILE '(' condicion ')' DO bloque_sen_ejecutable ',' {agregarEstructura($1);}
                      | WHILE condicion ')' DO bloque_sen_ejecutable ',' {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un parentesis al comienzo de la condicion");}
                      | WHILE '(' condicion DO bloque_sen_ejecutable ',' {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un parentesis al final de la condicion");}
                      | WHILE condicion DO bloque_sen_ejecutable ','     {agregarError(errores_sintacticos, Parser.ERROR, "Se espera que la condicion este encerrada entre parentesis");}
                      | WHILE '(' condicion ')' DO ','                   {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
                      ;
 
-clase                : CLASS ID '{' '}'
+clase                : CLASS ID '{' '}'                   {agregarClase($2);}
                      | CLASS ID '{' cuerpo_clase '}'
-                     | CLASS ID ','
+                     | CLASS ID ','                       {agregarFDClase($2);}
                      //| CLASS ID '{' cuerpo_clase        {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final de la clase");}
                      | CLASS ID cuerpo_clase '}'       {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final de la clase");}
                      //| CLASS ID                         {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una coma al final de la clase");}
@@ -232,12 +237,12 @@ int yylex() {
         return 0;
     }
 }
-public static void agregarError(List<String> errores, String tipo, String error) {
+public void agregarError(List<String> errores, String tipo, String error) {
         if (tipo == Parser.ERROR) {
                 errores_compilacion = true;
         }
 
-        int linea_actual = 1;
+        int linea_actual = lexicalAnalyzer.getLine();
 
         errores.add(tipo + " (Linea " + linea_actual + "): " + error);
 }
@@ -253,6 +258,23 @@ public static void imprimirErrores(List<String> errores, String cabecera) {
                 }
                 
         }
+}
+
+public void agregarEstructura(Integer tk) {
+    String rw = lexicalAnalyzer.getReservedWord(tk);
+    if (rw == null)
+        rw = st.getLexema(tk);
+
+    agregarEstructura(rw);
+}
+
+public void agregarEstructura(String s) {
+    System.out.println("Linea(" + lexicalAnalyzer.getLine() + "): " + s);
+}
+
+public void agregarClase(Integer id) {
+    st.setDescription(id, "CLASS");
+    agregarEstructura("CLASS :" + st.getLexema(id));
 }
 
 LexicalAnalyzer lexicalAnalyzer;
