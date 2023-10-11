@@ -45,11 +45,11 @@ public class SymbolTable {
         return entry.lexema;
     }
 
-    public String getDescription(String lexema) {
-        SymbolTableEntry entry = symbolTable.get(getPtr(lexema));
+    public String getAttribute(Integer ptr, String attribute) {
+        SymbolTableEntry entry = symbolTable.get(ptr);
         if (entry == null)
             return null;
-        return entry.attributes.get("description");
+        return entry.attributes.get(attribute);
     }
 
     public boolean contains(String lexema) {
@@ -72,12 +72,12 @@ public class SymbolTable {
         return 0;
     }
 
-    public boolean setDescription(Integer ptr, String description) {
+    public boolean setAttribute(Integer ptr, String attribute, String value) {
         SymbolTableEntry entry = symbolTable.get(ptr);
         if (entry == null)
             return false;
 
-        entry.attributes.put("description", description);
+        entry.attributes.put(attribute, value);
         return true;
     }
 

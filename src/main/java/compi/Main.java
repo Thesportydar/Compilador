@@ -3,9 +3,11 @@ package compi;
 import java.io.*;
 import java.util.Scanner;
 import compi.AccionesSemanticas.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
-    public static AccionSemantica getAccionSemantica(String s, SymbolTable st) {
+    public static AccionSemantica getAccionSemantica(String s, SymbolTable st, List<String> erroresLexicos) {
         // en un futuro estaria bueno implementarlo con reflexion
         switch (s) {
             case "asm1":
@@ -17,15 +19,15 @@ public class Main {
             case "asm4":
                 return new AS1();
             case "asm5":
-                return new AS5(st, 32767, "shortint", 269);
+                return new AS5(st, 32767, "shortint", 269, erroresLexicos);
             case "asm6":
-                return new AS5(st, 65535, "uint", 270);
+                return new AS5(st, 65535, "uint", 270, erroresLexicos);
             case "asm7":
-                return new AS7(st);
+                return new AS7(st, erroresLexicos);
             case "asm8":
                 return new AS8();
             case "asm9":
-                return new AS9();
+                return new AS9(erroresLexicos);
             case "asm11":
                 return new AS11(st);
             default:
@@ -33,7 +35,7 @@ public class Main {
         }
     }
 
-    public static void loadMatrixs(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename, SymbolTable st) {
+    public static void loadMatrixs(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename, SymbolTable st, List<String> erroresLexicos) {
         try {
             Scanner scanner = new Scanner(new File(filename));
             scanner.useDelimiter(";");
@@ -49,7 +51,7 @@ public class Main {
 
                         if (values.length > 1) {
                             try {
-                                mA.set(row, column, getAccionSemantica(values[1], st));
+                                mA.set(row, column, getAccionSemantica(values[1], st, erroresLexicos));
                             } catch (ArrayIndexOutOfBoundsException e) {
                                 throw new ArrayIndexOutOfBoundsException("Error en la matriz de acciones semanticas: " + e.getMessage());
                             }
@@ -63,8 +65,8 @@ public class Main {
         }
     }
 
-    public static void parser(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename, SymbolTable st) {
-        LexicalAnalyzer la = new LexicalAnalyzer(filename, mI, mA);
+    public static void parser(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename, SymbolTable st, List<String> erroresLexicos) {
+        LexicalAnalyzer la = new LexicalAnalyzer(filename, mI, mA, erroresLexicos);
         Integer token = 0;
 
         do {
@@ -81,10 +83,10 @@ public class Main {
         TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 28);
         TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 28);
         SymbolTable st = new SymbolTable();
+        List<String> erroresLexicos = new ArrayList<>();
+        loadMatrixs(mI, mA, "test.csv", st, erroresLexicos);
 
-        loadMatrixs(mI, mA, "test.csv", st);
-
-        parser(mI, mA, "test.txt", st);
+        parser(mI, mA, "test.txt", st, erroresLexicos);
 
         st.print();
     }

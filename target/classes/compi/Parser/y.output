@@ -21,74 +21,74 @@
   15  CTE : CTE_SHORT
   16      | CTE_UINT
   17      | CTE_FLOAT
+  18      | '-' CTE_SHORT
+  19      | '-' CTE_FLOAT
 
-  18  list_var : list_var ';' ID
-  19           | ID
+  20  list_var : list_var ';' ID
+  21           | ID
 
-  20  funcion : VOID ID '(' parametro ')' '{' cuerpo_funcion '}'
-  21          | VOID ID '(' ')' '{' cuerpo_funcion '}'
-  22          | VOID ID '(' parametro ')' cuerpo_funcion '}'
-  23          | VOID ID '(' ')' cuerpo_funcion '}'
+  22  funcion : VOID ID '(' parametro ')' '{' cuerpo_funcion '}'
+  23          | VOID ID '(' ')' '{' cuerpo_funcion '}'
+  24          | VOID ID '(' parametro ')' cuerpo_funcion '}'
+  25          | VOID ID '(' ')' cuerpo_funcion '}'
 
-  24  parametro : tipo ID
-  25            | tipo
-  26            | ID
+  26  parametro : tipo ID
+  27            | tipo
+  28            | ID
 
-  27  cuerpo_funcion : cuerpo_funcion sen_declarativa sen_retorno ','
-  28                 | cuerpo_funcion sen_ejecutable sen_retorno ','
-  29                 | cuerpo_funcion sen_ejecutable
-  30                 | sen_declarativa sen_retorno ','
-  31                 | sen_ejecutable sen_retorno ','
-  32                 | sen_ejecutable
+  29  cuerpo_funcion : cuerpo_funcion sen_declarativa sen_retorno ','
+  30                 | cuerpo_funcion sen_ejecutable sen_retorno ','
+  31                 | cuerpo_funcion sen_ejecutable
+  32                 | sen_declarativa sen_retorno ','
+  33                 | sen_ejecutable sen_retorno ','
+  34                 | sen_ejecutable
 
-  33  sen_retorno : RETURN
+  35  sen_retorno : RETURN
 
-  34  sen_ejecutable : asignacion ','
-  35                 | inv_funcion ','
-  36                 | seleccion ','
-  37                 | imprimir ','
-  38                 | inv_metodo ','
+  36  sen_ejecutable : asignacion ','
+  37                 | inv_funcion ','
+  38                 | seleccion ','
+  39                 | imprimir ','
+  40                 | inv_metodo ','
 
-  39  asignacion : ID '=' exp_aritmetica
-  40             | atributo_clase '=' exp_aritmetica
-  41             | '=' exp_aritmetica
-  42             | ID exp_aritmetica
-  43             | atributo_clase '='
-  44             | atributo_clase exp_aritmetica
+  41  asignacion : ID '=' exp_aritmetica
+  42             | atributo_clase '=' exp_aritmetica
+  43             | '=' exp_aritmetica
+  44             | ID exp_aritmetica
+  45             | atributo_clase '='
+  46             | atributo_clase exp_aritmetica
 
-  45  inv_funcion : ID '(' exp_aritmetica ')'
-  46              | ID '(' ')'
-  47              | ID '(' exp_aritmetica
-  48              | ID exp_aritmetica ')'
+  47  inv_funcion : ID '(' exp_aritmetica ')'
+  48              | ID '(' ')'
+  49              | ID '(' exp_aritmetica
+  50              | ID exp_aritmetica ')'
 
-  49  inv_metodo : atributo_clase '(' exp_aritmetica ')'
-  50             | atributo_clase '(' ')'
-  51             | atributo_clase '('
-  52             | atributo_clase ')'
+  51  inv_metodo : atributo_clase '(' exp_aritmetica ')'
+  52             | atributo_clase '(' ')'
+  53             | atributo_clase '('
+  54             | atributo_clase ')'
 
-  53  atributo_clase : ID '.' ID
+  55  atributo_clase : ID '.' ID
 
-  54  seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF
-  55            | IF '(' condicion ')' bloque_sen_ejecutable END_IF
-  56            | IF '(' condicion ')' ELSE bloque_sen_ejecutable END_IF
-  57            | IF '(' condicion ')' bloque_sen_ejecutable ELSE END_IF
-  58            | IF '(' condicion ')' END_IF
+  56  seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF
+  57            | IF '(' condicion ')' bloque_sen_ejecutable END_IF
+  58            | IF '(' condicion ')' ELSE bloque_sen_ejecutable END_IF
+  59            | IF '(' condicion ')' bloque_sen_ejecutable ELSE END_IF
+  60            | IF '(' condicion ')' END_IF
 
-  59  condicion : exp_aritmetica comparador exp_aritmetica
-  60            | exp_aritmetica comparador
-  61            | comparador exp_aritmetica
-  62            | exp_aritmetica
-  63            | comparador
+  61  condicion : exp_aritmetica comparador exp_aritmetica
+  62            | exp_aritmetica comparador
+  63            | comparador exp_aritmetica
+  64            | exp_aritmetica
+  65            | comparador
 
-  64  exp_aritmetica : exp_aritmetica '+' termino
-  65                 | exp_aritmetica '-' termino
-  66                 | termino
-  67                 | exp_aritmetica '+' '+' termino
-  68                 | exp_aritmetica '+' '*' termino
-  69                 | exp_aritmetica '+' '/' termino
-  70                 | exp_aritmetica '+' '-' termino
-  71                 | exp_aritmetica '-' '+' termino
-  72                 | exp_aritmetica '-' '-' termino
+  66  exp_aritmetica : exp_aritmetica '+' termino
+  67                 | exp_aritmetica '-' termino
+  68                 | termino
+  69                 | exp_aritmetica '+' '+' termino
+  70                 | exp_aritmetica '+' '*' termino
+  71                 | exp_aritmetica '+' '/' termino
+  72                 | exp_aritmetica '-' '+' termino
   73                 | exp_aritmetica '-' "" termino
   74                 | exp_aritmetica '-' '/' termino
 
@@ -181,38 +181,39 @@ state 2
 
 
 state 3
-	asignacion : ID . '=' exp_aritmetica  (39)
-	asignacion : ID . exp_aritmetica  (42)
-	inv_funcion : ID . '(' exp_aritmetica ')'  (45)
-	inv_funcion : ID . '(' ')'  (46)
-	inv_funcion : ID . '(' exp_aritmetica  (47)
-	inv_funcion : ID . exp_aritmetica ')'  (48)
-	atributo_clase : ID . '.' ID  (53)
+	asignacion : ID . '=' exp_aritmetica  (41)
+	asignacion : ID . exp_aritmetica  (44)
+	inv_funcion : ID . '(' exp_aritmetica ')'  (47)
+	inv_funcion : ID . '(' ')'  (48)
+	inv_funcion : ID . '(' exp_aritmetica  (49)
+	inv_funcion : ID . exp_aritmetica ')'  (50)
+	atributo_clase : ID . '.' ID  (55)
 
 	ID  shift 26
 	CTE_SHORT  shift 27
 	CTE_UINT  shift 28
 	CTE_FLOAT  shift 29
-	'('  shift 30
-	'='  shift 31
-	'.'  shift 32
+	'-'  shift 30
+	'('  shift 31
+	'='  shift 32
+	'.'  shift 33
 	.  error
 
-	CTE  goto 33
-	exp_aritmetica  goto 34
-	atributo_clase  goto 35
-	termino  goto 36
-	factor  goto 37
+	CTE  goto 34
+	exp_aritmetica  goto 35
+	atributo_clase  goto 36
+	termino  goto 37
+	factor  goto 38
 
 
 state 4
-	seleccion : IF . '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF  (54)
-	seleccion : IF . '(' condicion ')' bloque_sen_ejecutable END_IF  (55)
-	seleccion : IF . '(' condicion ')' ELSE bloque_sen_ejecutable END_IF  (56)
-	seleccion : IF . '(' condicion ')' bloque_sen_ejecutable ELSE END_IF  (57)
-	seleccion : IF . '(' condicion ')' END_IF  (58)
+	seleccion : IF . '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF  (56)
+	seleccion : IF . '(' condicion ')' bloque_sen_ejecutable END_IF  (57)
+	seleccion : IF . '(' condicion ')' ELSE bloque_sen_ejecutable END_IF  (58)
+	seleccion : IF . '(' condicion ')' bloque_sen_ejecutable ELSE END_IF  (59)
+	seleccion : IF . '(' condicion ')' END_IF  (60)
 
-	'('  shift 38
+	'('  shift 39
 	.  error
 
 
@@ -220,8 +221,8 @@ state 5
 	imprimir : PRINT . STR_1LN  (95)
 	imprimir : PRINT . ','  (96)
 
-	STR_1LN  shift 39
-	','  shift 40
+	STR_1LN  shift 40
+	','  shift 41
 	.  error
 
 
@@ -231,17 +232,17 @@ state 6
 	clase : CLASS . ID ','  (104)
 	clase : CLASS . ID cuerpo_clase '}'  (105)
 
-	ID  shift 41
+	ID  shift 42
 	.  error
 
 
 state 7
-	funcion : VOID . ID '(' parametro ')' '{' cuerpo_funcion '}'  (20)
-	funcion : VOID . ID '(' ')' '{' cuerpo_funcion '}'  (21)
-	funcion : VOID . ID '(' parametro ')' cuerpo_funcion '}'  (22)
-	funcion : VOID . ID '(' ')' cuerpo_funcion '}'  (23)
+	funcion : VOID . ID '(' parametro ')' '{' cuerpo_funcion '}'  (22)
+	funcion : VOID . ID '(' ')' '{' cuerpo_funcion '}'  (23)
+	funcion : VOID . ID '(' parametro ')' cuerpo_funcion '}'  (24)
+	funcion : VOID . ID '(' ')' cuerpo_funcion '}'  (25)
 
-	ID  shift 42
+	ID  shift 43
 	.  error
 
 
@@ -256,22 +257,23 @@ state 8
 	CTE_SHORT  shift 27
 	CTE_UINT  shift 28
 	CTE_FLOAT  shift 29
-	GREATER_EQUAL  shift 43
-	LESS_EQUAL  shift 44
-	EQUAL  shift 45
-	NOT_EQUAL  shift 46
-	'('  shift 47
-	'<'  shift 48
-	'>'  shift 49
+	GREATER_EQUAL  shift 44
+	LESS_EQUAL  shift 45
+	EQUAL  shift 46
+	NOT_EQUAL  shift 47
+	'-'  shift 30
+	'('  shift 48
+	'<'  shift 49
+	'>'  shift 50
 	.  error
 
-	CTE  goto 33
-	exp_aritmetica  goto 50
-	atributo_clase  goto 35
-	condicion  goto 51
-	comparador  goto 52
-	termino  goto 36
-	factor  goto 37
+	CTE  goto 34
+	exp_aritmetica  goto 51
+	atributo_clase  goto 36
+	condicion  goto 52
+	comparador  goto 53
+	termino  goto 37
+	factor  goto 38
 
 
 state 9
@@ -293,19 +295,20 @@ state 11
 
 
 state 12
-	asignacion : '=' . exp_aritmetica  (41)
+	asignacion : '=' . exp_aritmetica  (43)
 
 	ID  shift 26
 	CTE_SHORT  shift 27
 	CTE_UINT  shift 28
 	CTE_FLOAT  shift 29
+	'-'  shift 30
 	.  error
 
-	CTE  goto 33
-	exp_aritmetica  goto 53
-	atributo_clase  goto 35
-	termino  goto 36
-	factor  goto 37
+	CTE  goto 34
+	exp_aritmetica  goto 54
+	atributo_clase  goto 36
+	termino  goto 37
+	factor  goto 38
 
 
 state 13
@@ -324,13 +327,13 @@ state 13
 	SHORT  shift 9
 	UINT  shift 10
 	FLOAT  shift 11
-	'}'  shift 54
+	'}'  shift 55
 	'='  shift 12
 	$end  reduce 2
 
-	sen_declarativa  goto 55
-	sen_ejecutable  goto 56
-	sen_control  goto 57
+	sen_declarativa  goto 56
+	sen_ejecutable  goto 57
+	sen_control  goto 58
 	tipo  goto 17
 	funcion  goto 18
 	clase  goto 19
@@ -363,10 +366,10 @@ state 16
 state 17
 	sen_declarativa : tipo . list_var ','  (9)
 
-	ID  shift 58
+	ID  shift 59
 	.  error
 
-	list_var  goto 59
+	list_var  goto 60
 
 
 state 18
@@ -382,72 +385,73 @@ state 19
 
 
 state 20
-	sen_ejecutable : asignacion . ','  (34)
-
-	','  shift 60
-	.  error
-
-
-state 21
-	sen_ejecutable : inv_funcion . ','  (35)
+	sen_ejecutable : asignacion . ','  (36)
 
 	','  shift 61
 	.  error
 
 
-state 22
-	sen_ejecutable : seleccion . ','  (36)
+state 21
+	sen_ejecutable : inv_funcion . ','  (37)
 
 	','  shift 62
 	.  error
 
 
-state 23
-	sen_ejecutable : imprimir . ','  (37)
+state 22
+	sen_ejecutable : seleccion . ','  (38)
 
 	','  shift 63
 	.  error
 
 
-state 24
-	sen_ejecutable : inv_metodo . ','  (38)
+state 23
+	sen_ejecutable : imprimir . ','  (39)
 
 	','  shift 64
 	.  error
 
 
+state 24
+	sen_ejecutable : inv_metodo . ','  (40)
+
+	','  shift 65
+	.  error
+
+
 state 25
-	asignacion : atributo_clase . '=' exp_aritmetica  (40)
-	asignacion : atributo_clase . '='  (43)
-	asignacion : atributo_clase . exp_aritmetica  (44)
-	inv_metodo : atributo_clase . '(' exp_aritmetica ')'  (49)
-	inv_metodo : atributo_clase . '(' ')'  (50)
-	inv_metodo : atributo_clase . '('  (51)
-	inv_metodo : atributo_clase . ')'  (52)
+	asignacion : atributo_clase . '=' exp_aritmetica  (42)
+	asignacion : atributo_clase . '='  (45)
+	asignacion : atributo_clase . exp_aritmetica  (46)
+	inv_metodo : atributo_clase . '(' exp_aritmetica ')'  (51)
+	inv_metodo : atributo_clase . '(' ')'  (52)
+	inv_metodo : atributo_clase . '('  (53)
+	inv_metodo : atributo_clase . ')'  (54)
 
 	ID  shift 26
 	CTE_SHORT  shift 27
 	CTE_UINT  shift 28
 	CTE_FLOAT  shift 29
-	'('  shift 65
-	')'  shift 66
-	'='  shift 67
+	'-'  shift 30
+	'('  shift 66
+	')'  shift 67
+	'='  shift 68
 	.  error
 
-	CTE  goto 33
-	exp_aritmetica  goto 68
-	atributo_clase  goto 35
-	termino  goto 36
-	factor  goto 37
+	CTE  goto 34
+	exp_aritmetica  goto 69
+	atributo_clase  goto 36
+	termino  goto 37
+	factor  goto 38
 
 
 state 26
-	atributo_clase : ID . '.' ID  (53)
+	atributo_clase : ID . '.' ID  (55)
 	factor : ID .  (78)
 	factor : ID . INCREMENT  (79)
 
-	INCREMENT  shift 69
-	'.'  shift 32
+	INCREMENT  shift 70
+	'.'  shift 33
 	DO  reduce 78
 	GREATER_EQUAL  reduce 78
 	LESS_EQUAL  reduce 78
@@ -482,1270 +486,95 @@ state 29
 
 
 state 30
-	inv_funcion : ID '(' . exp_aritmetica ')'  (45)
-	inv_funcion : ID '(' . ')'  (46)
-	inv_funcion : ID '(' . exp_aritmetica  (47)
+	CTE : '-' . CTE_SHORT  (18)
+	CTE : '-' . CTE_FLOAT  (19)
 
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	')'  shift 70
+	CTE_SHORT  shift 71
+	CTE_FLOAT  shift 72
 	.  error
-
-	CTE  goto 33
-	exp_aritmetica  goto 71
-	atributo_clase  goto 35
-	termino  goto 36
-	factor  goto 37
 
 
 state 31
-	asignacion : ID '=' . exp_aritmetica  (39)
+	inv_funcion : ID '(' . exp_aritmetica ')'  (47)
+	inv_funcion : ID '(' . ')'  (48)
+	inv_funcion : ID '(' . exp_aritmetica  (49)
 
 	ID  shift 26
 	CTE_SHORT  shift 27
 	CTE_UINT  shift 28
 	CTE_FLOAT  shift 29
+	'-'  shift 30
+	')'  shift 73
 	.  error
 
-	CTE  goto 33
-	exp_aritmetica  goto 72
-	atributo_clase  goto 35
-	termino  goto 36
-	factor  goto 37
+	CTE  goto 34
+	exp_aritmetica  goto 74
+	atributo_clase  goto 36
+	termino  goto 37
+	factor  goto 38
 
 
 state 32
-	atributo_clase : ID '.' . ID  (53)
+	asignacion : ID '=' . exp_aritmetica  (41)
 
-	ID  shift 73
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
 	.  error
+
+	CTE  goto 34
+	exp_aritmetica  goto 75
+	atributo_clase  goto 36
+	termino  goto 37
+	factor  goto 38
 
 
 state 33
+	atributo_clase : ID '.' . ID  (55)
+
+	ID  shift 76
+	.  error
+
+
+state 34
 	factor : CTE .  (80)
 
 	.  reduce 80
 
 
-state 34
-	asignacion : ID exp_aritmetica .  (42)
-	inv_funcion : ID exp_aritmetica . ')'  (48)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
+state 35
+	asignacion : ID exp_aritmetica .  (44)
+	inv_funcion : ID exp_aritmetica . ')'  (50)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
 	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
 	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
 
-	'+'  shift 74
-	'-'  shift 75
-	')'  shift 76
-	','  reduce 42
+	'+'  shift 77
+	'-'  shift 78
+	')'  shift 79
+	','  reduce 44
 
 
-state 35
+state 36
 	factor : atributo_clase .  (81)
 
 	.  reduce 81
 
 
-state 36
-	exp_aritmetica : termino .  (66)
-	termino : termino . '*' factor  (75)
-	termino : termino . '/' factor  (76)
-
-	'*'  shift 77
-	'/'  shift 78
-	DO  reduce 66
-	GREATER_EQUAL  reduce 66
-	LESS_EQUAL  reduce 66
-	EQUAL  reduce 66
-	NOT_EQUAL  reduce 66
-	'+'  reduce 66
-	'-'  reduce 66
-	','  reduce 66
-	')'  reduce 66
-	'<'  reduce 66
-	'>'  reduce 66
-
-
 state 37
-	termino : factor .  (77)
-
-	.  reduce 77
-
-
-state 38
-	seleccion : IF '(' . condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF  (54)
-	seleccion : IF '(' . condicion ')' bloque_sen_ejecutable END_IF  (55)
-	seleccion : IF '(' . condicion ')' ELSE bloque_sen_ejecutable END_IF  (56)
-	seleccion : IF '(' . condicion ')' bloque_sen_ejecutable ELSE END_IF  (57)
-	seleccion : IF '(' . condicion ')' END_IF  (58)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	GREATER_EQUAL  shift 43
-	LESS_EQUAL  shift 44
-	EQUAL  shift 45
-	NOT_EQUAL  shift 46
-	'<'  shift 48
-	'>'  shift 49
-	.  error
-
-	CTE  goto 33
-	exp_aritmetica  goto 50
-	atributo_clase  goto 35
-	condicion  goto 79
-	comparador  goto 52
-	termino  goto 36
-	factor  goto 37
-
-
-state 39
-	imprimir : PRINT STR_1LN .  (95)
-
-	.  reduce 95
-
-
-state 40
-	imprimir : PRINT ',' .  (96)
-
-	.  reduce 96
-
-
-state 41
-	clase : CLASS ID . '{' '}'  (102)
-	clase : CLASS ID . '{' cuerpo_clase '}'  (103)
-	clase : CLASS ID . ','  (104)
-	clase : CLASS ID . cuerpo_clase '}'  (105)
-
-	CLASS  shift 6
-	VOID  shift 7
-	SHORT  shift 9
-	UINT  shift 10
-	FLOAT  shift 11
-	'{'  shift 80
-	','  shift 81
-	.  error
-
-	sen_declarativa  goto 82
-	tipo  goto 17
-	funcion  goto 18
-	clase  goto 19
-	cuerpo_clase  goto 83
-
-
-state 42
-	funcion : VOID ID . '(' parametro ')' '{' cuerpo_funcion '}'  (20)
-	funcion : VOID ID . '(' ')' '{' cuerpo_funcion '}'  (21)
-	funcion : VOID ID . '(' parametro ')' cuerpo_funcion '}'  (22)
-	funcion : VOID ID . '(' ')' cuerpo_funcion '}'  (23)
-
-	'('  shift 84
-	.  error
-
-
-state 43
-	comparador : GREATER_EQUAL .  (84)
-
-	.  reduce 84
-
-
-state 44
-	comparador : LESS_EQUAL .  (85)
-
-	.  reduce 85
-
-
-state 45
-	comparador : EQUAL .  (83)
-
-	.  reduce 83
-
-
-state 46
-	comparador : NOT_EQUAL .  (82)
-
-	.  reduce 82
-
-
-state 47
-	sen_control : WHILE '(' . condicion ')' DO bloque_sen_ejecutable ','  (97)
-	sen_control : WHILE '(' . condicion DO bloque_sen_ejecutable ','  (99)
-	sen_control : WHILE '(' . condicion ')' DO ','  (101)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	GREATER_EQUAL  shift 43
-	LESS_EQUAL  shift 44
-	EQUAL  shift 45
-	NOT_EQUAL  shift 46
-	'<'  shift 48
-	'>'  shift 49
-	.  error
-
-	CTE  goto 33
-	exp_aritmetica  goto 50
-	atributo_clase  goto 35
-	condicion  goto 85
-	comparador  goto 52
-	termino  goto 36
-	factor  goto 37
-
-
-state 48
-	comparador : '<' .  (86)
-
-	.  reduce 86
-
-
-state 49
-	comparador : '>' .  (87)
-
-	.  reduce 87
-
-
-state 50
-	condicion : exp_aritmetica . comparador exp_aritmetica  (59)
-	condicion : exp_aritmetica . comparador  (60)
-	condicion : exp_aritmetica .  (62)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
-	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
-	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
-
-	GREATER_EQUAL  shift 43
-	LESS_EQUAL  shift 44
-	EQUAL  shift 45
-	NOT_EQUAL  shift 46
-	'+'  shift 74
-	'-'  shift 75
-	'<'  shift 48
-	'>'  shift 49
-	DO  reduce 62
-	')'  reduce 62
-
-	comparador  goto 86
-
-
-state 51
-	sen_control : WHILE condicion . ')' DO bloque_sen_ejecutable ','  (98)
-	sen_control : WHILE condicion . DO bloque_sen_ejecutable ','  (100)
-
-	DO  shift 87
-	')'  shift 88
-	.  error
-
-
-state 52
-	condicion : comparador . exp_aritmetica  (61)
-	condicion : comparador .  (63)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	DO  reduce 63
-	')'  reduce 63
-
-	CTE  goto 33
-	exp_aritmetica  goto 89
-	atributo_clase  goto 35
-	termino  goto 36
-	factor  goto 37
-
-
-state 53
-	asignacion : '=' exp_aritmetica .  (41)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
-	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
-	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
-
-	'+'  shift 74
-	'-'  shift 75
-	','  reduce 41
-
-
-state 54
-	prog : '{' sentencias '}' .  (1)
-
-	.  reduce 1
-
-
-state 55
-	sentencias : sentencias sen_declarativa .  (3)
-
-	.  reduce 3
-
-
-state 56
-	sentencias : sentencias sen_ejecutable .  (4)
-
-	.  reduce 4
-
-
-state 57
-	sentencias : sentencias sen_control .  (5)
-
-	.  reduce 5
-
-
-state 58
-	list_var : ID .  (19)
-
-	.  reduce 19
-
-
-state 59
-	sen_declarativa : tipo list_var . ','  (9)
-	list_var : list_var . ';' ID  (18)
-
-	','  shift 90
-	';'  shift 91
-	.  error
-
-
-state 60
-	sen_ejecutable : asignacion ',' .  (34)
-
-	.  reduce 34
-
-
-state 61
-	sen_ejecutable : inv_funcion ',' .  (35)
-
-	.  reduce 35
-
-
-state 62
-	sen_ejecutable : seleccion ',' .  (36)
-
-	.  reduce 36
-
-
-state 63
-	sen_ejecutable : imprimir ',' .  (37)
-
-	.  reduce 37
-
-
-state 64
-	sen_ejecutable : inv_metodo ',' .  (38)
-
-	.  reduce 38
-
-
-state 65
-	inv_metodo : atributo_clase '(' . exp_aritmetica ')'  (49)
-	inv_metodo : atributo_clase '(' . ')'  (50)
-	inv_metodo : atributo_clase '(' .  (51)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	')'  shift 92
-	','  reduce 51
-
-	CTE  goto 33
-	exp_aritmetica  goto 93
-	atributo_clase  goto 35
-	termino  goto 36
-	factor  goto 37
-
-
-state 66
-	inv_metodo : atributo_clase ')' .  (52)
-
-	.  reduce 52
-
-
-state 67
-	asignacion : atributo_clase '=' . exp_aritmetica  (40)
-	asignacion : atributo_clase '=' .  (43)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	','  reduce 43
-
-	CTE  goto 33
-	exp_aritmetica  goto 94
-	atributo_clase  goto 35
-	termino  goto 36
-	factor  goto 37
-
-
-state 68
-	asignacion : atributo_clase exp_aritmetica .  (44)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
-	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
-	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
-
-	'+'  shift 74
-	'-'  shift 75
-	','  reduce 44
-
-
-state 69
-	factor : ID INCREMENT .  (79)
-
-	.  reduce 79
-
-
-state 70
-	inv_funcion : ID '(' ')' .  (46)
-
-	.  reduce 46
-
-
-state 71
-	inv_funcion : ID '(' exp_aritmetica . ')'  (45)
-	inv_funcion : ID '(' exp_aritmetica .  (47)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
-	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
-	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
-
-	'+'  shift 74
-	'-'  shift 75
-	')'  shift 95
-	','  reduce 47
-
-
-state 72
-	asignacion : ID '=' exp_aritmetica .  (39)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
-	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
-	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
-
-	'+'  shift 74
-	'-'  shift 75
-	','  reduce 39
-
-
-state 73
-	atributo_clase : ID '.' ID .  (53)
-
-	.  reduce 53
-
-
-state 74
-	exp_aritmetica : exp_aritmetica '+' . termino  (64)
-	exp_aritmetica : exp_aritmetica '+' . '+' termino  (67)
-	exp_aritmetica : exp_aritmetica '+' . '*' termino  (68)
-	exp_aritmetica : exp_aritmetica '+' . '/' termino  (69)
-	exp_aritmetica : exp_aritmetica '+' . '-' termino  (70)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	'+'  shift 96
-	'-'  shift 97
-	'*'  shift 98
-	'/'  shift 99
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 100
-	factor  goto 37
-
-
-state 75
-	exp_aritmetica : exp_aritmetica '-' . termino  (65)
-	exp_aritmetica : exp_aritmetica '-' . '+' termino  (71)
-	exp_aritmetica : exp_aritmetica '-' . '-' termino  (72)
-	exp_aritmetica : exp_aritmetica '-' . "" termino  (73)
-	exp_aritmetica : exp_aritmetica '-' . '/' termino  (74)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	'+'  shift 101
-	'-'  shift 102
-	'/'  shift 103
-	""  shift 104
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 105
-	factor  goto 37
-
-
-state 76
-	inv_funcion : ID exp_aritmetica ')' .  (48)
-
-	.  reduce 48
-
-
-state 77
-	termino : termino '*' . factor  (75)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	factor  goto 106
-
-
-state 78
-	termino : termino '/' . factor  (76)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	factor  goto 107
-
-
-state 79
-	seleccion : IF '(' condicion . ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF  (54)
-	seleccion : IF '(' condicion . ')' bloque_sen_ejecutable END_IF  (55)
-	seleccion : IF '(' condicion . ')' ELSE bloque_sen_ejecutable END_IF  (56)
-	seleccion : IF '(' condicion . ')' bloque_sen_ejecutable ELSE END_IF  (57)
-	seleccion : IF '(' condicion . ')' END_IF  (58)
-
-	')'  shift 108
-	.  error
-
-
-state 80
-	clase : CLASS ID '{' . '}'  (102)
-	clase : CLASS ID '{' . cuerpo_clase '}'  (103)
-
-	CLASS  shift 6
-	VOID  shift 7
-	SHORT  shift 9
-	UINT  shift 10
-	FLOAT  shift 11
-	'}'  shift 109
-	.  error
-
-	sen_declarativa  goto 82
-	tipo  goto 17
-	funcion  goto 18
-	clase  goto 19
-	cuerpo_clase  goto 110
-
-
-state 81
-	clase : CLASS ID ',' .  (104)
-
-	.  reduce 104
-
-
-state 82
-	cuerpo_clase : sen_declarativa .  (107)
-
-	.  reduce 107
-
-
-state 83
-	clase : CLASS ID cuerpo_clase . '}'  (105)
-	cuerpo_clase : cuerpo_clase . sen_declarativa  (106)
-
-	CLASS  shift 6
-	VOID  shift 7
-	SHORT  shift 9
-	UINT  shift 10
-	FLOAT  shift 11
-	'}'  shift 111
-	.  error
-
-	sen_declarativa  goto 112
-	tipo  goto 17
-	funcion  goto 18
-	clase  goto 19
-
-
-state 84
-	funcion : VOID ID '(' . parametro ')' '{' cuerpo_funcion '}'  (20)
-	funcion : VOID ID '(' . ')' '{' cuerpo_funcion '}'  (21)
-	funcion : VOID ID '(' . parametro ')' cuerpo_funcion '}'  (22)
-	funcion : VOID ID '(' . ')' cuerpo_funcion '}'  (23)
-
-	ID  shift 113
-	SHORT  shift 9
-	UINT  shift 10
-	FLOAT  shift 11
-	')'  shift 114
-	.  error
-
-	tipo  goto 115
-	parametro  goto 116
-
-
-state 85
-	sen_control : WHILE '(' condicion . ')' DO bloque_sen_ejecutable ','  (97)
-	sen_control : WHILE '(' condicion . DO bloque_sen_ejecutable ','  (99)
-	sen_control : WHILE '(' condicion . ')' DO ','  (101)
-
-	DO  shift 117
-	')'  shift 118
-	.  error
-
-
-state 86
-	condicion : exp_aritmetica comparador . exp_aritmetica  (59)
-	condicion : exp_aritmetica comparador .  (60)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	DO  reduce 60
-	')'  reduce 60
-
-	CTE  goto 33
-	exp_aritmetica  goto 119
-	atributo_clase  goto 35
-	termino  goto 36
-	factor  goto 37
-
-
-state 87
-	sen_control : WHILE condicion DO . bloque_sen_ejecutable ','  (100)
-
-	ID  shift 3
-	IF  shift 4
-	PRINT  shift 5
-	'{'  shift 120
-	'='  shift 12
-	.  error
-
-	sen_ejecutable  goto 121
-	asignacion  goto 20
-	inv_funcion  goto 21
-	seleccion  goto 22
-	imprimir  goto 23
-	inv_metodo  goto 24
-	atributo_clase  goto 25
-	bloque_sen_ejecutable  goto 122
-	sen_ejecutable_r  goto 123
-
-
-state 88
-	sen_control : WHILE condicion ')' . DO bloque_sen_ejecutable ','  (98)
-
-	DO  shift 124
-	.  error
-
-
-state 89
-	condicion : comparador exp_aritmetica .  (61)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
-	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
-	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
-
-	'+'  shift 74
-	'-'  shift 75
-	DO  reduce 61
-	')'  reduce 61
-
-
-state 90
-	sen_declarativa : tipo list_var ',' .  (9)
-
-	.  reduce 9
-
-
-state 91
-	list_var : list_var ';' . ID  (18)
-
-	ID  shift 125
-	.  error
-
-
-state 92
-	inv_metodo : atributo_clase '(' ')' .  (50)
-
-	.  reduce 50
-
-
-state 93
-	inv_metodo : atributo_clase '(' exp_aritmetica . ')'  (49)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
-	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
-	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
-
-	'+'  shift 74
-	'-'  shift 75
-	')'  shift 126
-	.  error
-
-
-state 94
-	asignacion : atributo_clase '=' exp_aritmetica .  (40)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
-	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
-	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
-
-	'+'  shift 74
-	'-'  shift 75
-	','  reduce 40
-
-
-state 95
-	inv_funcion : ID '(' exp_aritmetica ')' .  (45)
-
-	.  reduce 45
-
-
-state 96
-	exp_aritmetica : exp_aritmetica '+' '+' . termino  (67)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 127
-	factor  goto 37
-
-
-state 97
-	exp_aritmetica : exp_aritmetica '+' '-' . termino  (70)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 128
-	factor  goto 37
-
-
-state 98
-	exp_aritmetica : exp_aritmetica '+' '*' . termino  (68)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 129
-	factor  goto 37
-
-
-state 99
-	exp_aritmetica : exp_aritmetica '+' '/' . termino  (69)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 130
-	factor  goto 37
-
-
-state 100
-	exp_aritmetica : exp_aritmetica '+' termino .  (64)
+	exp_aritmetica : termino .  (68)
 	termino : termino . '*' factor  (75)
 	termino : termino . '/' factor  (76)
 
-	'*'  shift 77
-	'/'  shift 78
-	DO  reduce 64
-	GREATER_EQUAL  reduce 64
-	LESS_EQUAL  reduce 64
-	EQUAL  reduce 64
-	NOT_EQUAL  reduce 64
-	'+'  reduce 64
-	'-'  reduce 64
-	','  reduce 64
-	')'  reduce 64
-	'<'  reduce 64
-	'>'  reduce 64
-
-
-state 101
-	exp_aritmetica : exp_aritmetica '-' '+' . termino  (71)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 131
-	factor  goto 37
-
-
-state 102
-	exp_aritmetica : exp_aritmetica '-' '-' . termino  (72)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 132
-	factor  goto 37
-
-
-state 103
-	exp_aritmetica : exp_aritmetica '-' '/' . termino  (74)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 133
-	factor  goto 37
-
-
-state 104
-	exp_aritmetica : exp_aritmetica '-' "" . termino  (73)
-
-	ID  shift 26
-	CTE_SHORT  shift 27
-	CTE_UINT  shift 28
-	CTE_FLOAT  shift 29
-	.  error
-
-	CTE  goto 33
-	atributo_clase  goto 35
-	termino  goto 134
-	factor  goto 37
-
-
-state 105
-	exp_aritmetica : exp_aritmetica '-' termino .  (65)
-	termino : termino . '*' factor  (75)
-	termino : termino . '/' factor  (76)
-
-	'*'  shift 77
-	'/'  shift 78
-	DO  reduce 65
-	GREATER_EQUAL  reduce 65
-	LESS_EQUAL  reduce 65
-	EQUAL  reduce 65
-	NOT_EQUAL  reduce 65
-	'+'  reduce 65
-	'-'  reduce 65
-	','  reduce 65
-	')'  reduce 65
-	'<'  reduce 65
-	'>'  reduce 65
-
-
-state 106
-	termino : termino '*' factor .  (75)
-
-	.  reduce 75
-
-
-state 107
-	termino : termino '/' factor .  (76)
-
-	.  reduce 76
-
-
-state 108
-	seleccion : IF '(' condicion ')' . bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF  (54)
-	seleccion : IF '(' condicion ')' . bloque_sen_ejecutable END_IF  (55)
-	seleccion : IF '(' condicion ')' . ELSE bloque_sen_ejecutable END_IF  (56)
-	seleccion : IF '(' condicion ')' . bloque_sen_ejecutable ELSE END_IF  (57)
-	seleccion : IF '(' condicion ')' . END_IF  (58)
-
-	ID  shift 3
-	IF  shift 4
-	ELSE  shift 135
-	END_IF  shift 136
-	PRINT  shift 5
-	'{'  shift 120
-	'='  shift 12
-	.  error
-
-	sen_ejecutable  goto 121
-	asignacion  goto 20
-	inv_funcion  goto 21
-	seleccion  goto 22
-	imprimir  goto 23
-	inv_metodo  goto 24
-	atributo_clase  goto 25
-	bloque_sen_ejecutable  goto 137
-	sen_ejecutable_r  goto 123
-
-
-state 109
-	clase : CLASS ID '{' '}' .  (102)
-
-	.  reduce 102
-
-
-state 110
-	clase : CLASS ID '{' cuerpo_clase . '}'  (103)
-	cuerpo_clase : cuerpo_clase . sen_declarativa  (106)
-
-	CLASS  shift 6
-	VOID  shift 7
-	SHORT  shift 9
-	UINT  shift 10
-	FLOAT  shift 11
-	'}'  shift 138
-	.  error
-
-	sen_declarativa  goto 112
-	tipo  goto 17
-	funcion  goto 18
-	clase  goto 19
-
-
-state 111
-	clase : CLASS ID cuerpo_clase '}' .  (105)
-
-	.  reduce 105
-
-
-state 112
-	cuerpo_clase : cuerpo_clase sen_declarativa .  (106)
-
-	.  reduce 106
-
-
-state 113
-	parametro : ID .  (26)
-
-	.  reduce 26
-
-
-state 114
-	funcion : VOID ID '(' ')' . '{' cuerpo_funcion '}'  (21)
-	funcion : VOID ID '(' ')' . cuerpo_funcion '}'  (23)
-
-	ID  shift 3
-	IF  shift 4
-	PRINT  shift 5
-	CLASS  shift 6
-	VOID  shift 7
-	SHORT  shift 9
-	UINT  shift 10
-	FLOAT  shift 11
-	'{'  shift 139
-	'='  shift 12
-	.  error
-
-	sen_declarativa  goto 140
-	sen_ejecutable  goto 141
-	tipo  goto 17
-	funcion  goto 18
-	clase  goto 19
-	cuerpo_funcion  goto 142
-	asignacion  goto 20
-	inv_funcion  goto 21
-	seleccion  goto 22
-	imprimir  goto 23
-	inv_metodo  goto 24
-	atributo_clase  goto 25
-
-
-state 115
-	parametro : tipo . ID  (24)
-	parametro : tipo .  (25)
-
-	ID  shift 143
-	')'  reduce 25
-
-
-state 116
-	funcion : VOID ID '(' parametro . ')' '{' cuerpo_funcion '}'  (20)
-	funcion : VOID ID '(' parametro . ')' cuerpo_funcion '}'  (22)
-
-	')'  shift 144
-	.  error
-
-
-state 117
-	sen_control : WHILE '(' condicion DO . bloque_sen_ejecutable ','  (99)
-
-	ID  shift 3
-	IF  shift 4
-	PRINT  shift 5
-	'{'  shift 120
-	'='  shift 12
-	.  error
-
-	sen_ejecutable  goto 121
-	asignacion  goto 20
-	inv_funcion  goto 21
-	seleccion  goto 22
-	imprimir  goto 23
-	inv_metodo  goto 24
-	atributo_clase  goto 25
-	bloque_sen_ejecutable  goto 145
-	sen_ejecutable_r  goto 123
-
-
-state 118
-	sen_control : WHILE '(' condicion ')' . DO bloque_sen_ejecutable ','  (97)
-	sen_control : WHILE '(' condicion ')' . DO ','  (101)
-
-	DO  shift 146
-	.  error
-
-
-state 119
-	condicion : exp_aritmetica comparador exp_aritmetica .  (59)
-	exp_aritmetica : exp_aritmetica . '+' termino  (64)
-	exp_aritmetica : exp_aritmetica . '-' termino  (65)
-	exp_aritmetica : exp_aritmetica . '+' '+' termino  (67)
-	exp_aritmetica : exp_aritmetica . '+' '*' termino  (68)
-	exp_aritmetica : exp_aritmetica . '+' '/' termino  (69)
-	exp_aritmetica : exp_aritmetica . '+' '-' termino  (70)
-	exp_aritmetica : exp_aritmetica . '-' '+' termino  (71)
-	exp_aritmetica : exp_aritmetica . '-' '-' termino  (72)
-	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
-	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
-
-	'+'  shift 74
-	'-'  shift 75
-	DO  reduce 59
-	')'  reduce 59
-
-
-state 120
-	bloque_sen_ejecutable : '{' . sen_ejecutable_r '}'  (89)
-	bloque_sen_ejecutable : '{' . sen_ejecutable_r  (91)
-	bloque_sen_ejecutable : '{' . '}'  (92)
-
-	ID  shift 3
-	IF  shift 4
-	PRINT  shift 5
-	'}'  shift 147
-	'='  shift 12
-	.  error
-
-	sen_ejecutable  goto 148
-	asignacion  goto 20
-	inv_funcion  goto 21
-	seleccion  goto 22
-	imprimir  goto 23
-	inv_metodo  goto 24
-	atributo_clase  goto 25
-	sen_ejecutable_r  goto 149
-
-
-state 121
-	bloque_sen_ejecutable : sen_ejecutable .  (88)
-	sen_ejecutable_r : sen_ejecutable .  (94)
-
-	ID  reduce 94
-	IF  reduce 94
-	ELSE  reduce 88
-	END_IF  reduce 88
-	PRINT  reduce 94
-	'}'  reduce 94
-	','  reduce 88
-	'='  reduce 94
-
-
-state 122
-	sen_control : WHILE condicion DO bloque_sen_ejecutable . ','  (100)
-
-	','  shift 150
-	.  error
-
-
-state 123
-	bloque_sen_ejecutable : sen_ejecutable_r . '}'  (90)
-	sen_ejecutable_r : sen_ejecutable_r . sen_ejecutable  (93)
-
-	ID  shift 3
-	IF  shift 4
-	PRINT  shift 5
-	'}'  shift 151
-	'='  shift 12
-	.  error
-
-	sen_ejecutable  goto 152
-	asignacion  goto 20
-	inv_funcion  goto 21
-	seleccion  goto 22
-	imprimir  goto 23
-	inv_metodo  goto 24
-	atributo_clase  goto 25
-
-
-state 124
-	sen_control : WHILE condicion ')' DO . bloque_sen_ejecutable ','  (98)
-
-	ID  shift 3
-	IF  shift 4
-	PRINT  shift 5
-	'{'  shift 120
-	'='  shift 12
-	.  error
-
-	sen_ejecutable  goto 121
-	asignacion  goto 20
-	inv_funcion  goto 21
-	seleccion  goto 22
-	imprimir  goto 23
-	inv_metodo  goto 24
-	atributo_clase  goto 25
-	bloque_sen_ejecutable  goto 153
-	sen_ejecutable_r  goto 123
-
-
-state 125
-	list_var : list_var ';' ID .  (18)
-
-	.  reduce 18
-
-
-state 126
-	inv_metodo : atributo_clase '(' exp_aritmetica ')' .  (49)
-
-	.  reduce 49
-
-
-state 127
-	exp_aritmetica : exp_aritmetica '+' '+' termino .  (67)
-	termino : termino . '*' factor  (75)
-	termino : termino . '/' factor  (76)
-
-	'*'  shift 77
-	'/'  shift 78
-	DO  reduce 67
-	GREATER_EQUAL  reduce 67
-	LESS_EQUAL  reduce 67
-	EQUAL  reduce 67
-	NOT_EQUAL  reduce 67
-	'+'  reduce 67
-	'-'  reduce 67
-	','  reduce 67
-	')'  reduce 67
-	'<'  reduce 67
-	'>'  reduce 67
-
-
-state 128
-	exp_aritmetica : exp_aritmetica '+' '-' termino .  (70)
-	termino : termino . '*' factor  (75)
-	termino : termino . '/' factor  (76)
-
-	'*'  shift 77
-	'/'  shift 78
-	DO  reduce 70
-	GREATER_EQUAL  reduce 70
-	LESS_EQUAL  reduce 70
-	EQUAL  reduce 70
-	NOT_EQUAL  reduce 70
-	'+'  reduce 70
-	'-'  reduce 70
-	','  reduce 70
-	')'  reduce 70
-	'<'  reduce 70
-	'>'  reduce 70
-
-
-state 129
-	exp_aritmetica : exp_aritmetica '+' '*' termino .  (68)
-	termino : termino . '*' factor  (75)
-	termino : termino . '/' factor  (76)
-
-	'*'  shift 77
-	'/'  shift 78
+	'*'  shift 80
+	'/'  shift 81
 	DO  reduce 68
 	GREATER_EQUAL  reduce 68
 	LESS_EQUAL  reduce 68
@@ -1759,13 +588,1113 @@ state 129
 	'>'  reduce 68
 
 
-state 130
-	exp_aritmetica : exp_aritmetica '+' '/' termino .  (69)
+state 38
+	termino : factor .  (77)
+
+	.  reduce 77
+
+
+state 39
+	seleccion : IF '(' . condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF  (56)
+	seleccion : IF '(' . condicion ')' bloque_sen_ejecutable END_IF  (57)
+	seleccion : IF '(' . condicion ')' ELSE bloque_sen_ejecutable END_IF  (58)
+	seleccion : IF '(' . condicion ')' bloque_sen_ejecutable ELSE END_IF  (59)
+	seleccion : IF '(' . condicion ')' END_IF  (60)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	GREATER_EQUAL  shift 44
+	LESS_EQUAL  shift 45
+	EQUAL  shift 46
+	NOT_EQUAL  shift 47
+	'-'  shift 30
+	'<'  shift 49
+	'>'  shift 50
+	.  error
+
+	CTE  goto 34
+	exp_aritmetica  goto 51
+	atributo_clase  goto 36
+	condicion  goto 82
+	comparador  goto 53
+	termino  goto 37
+	factor  goto 38
+
+
+state 40
+	imprimir : PRINT STR_1LN .  (95)
+
+	.  reduce 95
+
+
+state 41
+	imprimir : PRINT ',' .  (96)
+
+	.  reduce 96
+
+
+state 42
+	clase : CLASS ID . '{' '}'  (102)
+	clase : CLASS ID . '{' cuerpo_clase '}'  (103)
+	clase : CLASS ID . ','  (104)
+	clase : CLASS ID . cuerpo_clase '}'  (105)
+
+	CLASS  shift 6
+	VOID  shift 7
+	SHORT  shift 9
+	UINT  shift 10
+	FLOAT  shift 11
+	'{'  shift 83
+	','  shift 84
+	.  error
+
+	sen_declarativa  goto 85
+	tipo  goto 17
+	funcion  goto 18
+	clase  goto 19
+	cuerpo_clase  goto 86
+
+
+state 43
+	funcion : VOID ID . '(' parametro ')' '{' cuerpo_funcion '}'  (22)
+	funcion : VOID ID . '(' ')' '{' cuerpo_funcion '}'  (23)
+	funcion : VOID ID . '(' parametro ')' cuerpo_funcion '}'  (24)
+	funcion : VOID ID . '(' ')' cuerpo_funcion '}'  (25)
+
+	'('  shift 87
+	.  error
+
+
+state 44
+	comparador : GREATER_EQUAL .  (84)
+
+	.  reduce 84
+
+
+state 45
+	comparador : LESS_EQUAL .  (85)
+
+	.  reduce 85
+
+
+state 46
+	comparador : EQUAL .  (83)
+
+	.  reduce 83
+
+
+state 47
+	comparador : NOT_EQUAL .  (82)
+
+	.  reduce 82
+
+
+state 48
+	sen_control : WHILE '(' . condicion ')' DO bloque_sen_ejecutable ','  (97)
+	sen_control : WHILE '(' . condicion DO bloque_sen_ejecutable ','  (99)
+	sen_control : WHILE '(' . condicion ')' DO ','  (101)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	GREATER_EQUAL  shift 44
+	LESS_EQUAL  shift 45
+	EQUAL  shift 46
+	NOT_EQUAL  shift 47
+	'-'  shift 30
+	'<'  shift 49
+	'>'  shift 50
+	.  error
+
+	CTE  goto 34
+	exp_aritmetica  goto 51
+	atributo_clase  goto 36
+	condicion  goto 88
+	comparador  goto 53
+	termino  goto 37
+	factor  goto 38
+
+
+state 49
+	comparador : '<' .  (86)
+
+	.  reduce 86
+
+
+state 50
+	comparador : '>' .  (87)
+
+	.  reduce 87
+
+
+state 51
+	condicion : exp_aritmetica . comparador exp_aritmetica  (61)
+	condicion : exp_aritmetica . comparador  (62)
+	condicion : exp_aritmetica .  (64)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
+	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
+	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
+
+	GREATER_EQUAL  shift 44
+	LESS_EQUAL  shift 45
+	EQUAL  shift 46
+	NOT_EQUAL  shift 47
+	'+'  shift 77
+	'-'  shift 78
+	'<'  shift 49
+	'>'  shift 50
+	DO  reduce 64
+	')'  reduce 64
+
+	comparador  goto 89
+
+
+state 52
+	sen_control : WHILE condicion . ')' DO bloque_sen_ejecutable ','  (98)
+	sen_control : WHILE condicion . DO bloque_sen_ejecutable ','  (100)
+
+	DO  shift 90
+	')'  shift 91
+	.  error
+
+
+state 53
+	condicion : comparador . exp_aritmetica  (63)
+	condicion : comparador .  (65)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	DO  reduce 65
+	')'  reduce 65
+
+	CTE  goto 34
+	exp_aritmetica  goto 92
+	atributo_clase  goto 36
+	termino  goto 37
+	factor  goto 38
+
+
+state 54
+	asignacion : '=' exp_aritmetica .  (43)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
+	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
+	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
+
+	'+'  shift 77
+	'-'  shift 78
+	','  reduce 43
+
+
+state 55
+	prog : '{' sentencias '}' .  (1)
+
+	.  reduce 1
+
+
+state 56
+	sentencias : sentencias sen_declarativa .  (3)
+
+	.  reduce 3
+
+
+state 57
+	sentencias : sentencias sen_ejecutable .  (4)
+
+	.  reduce 4
+
+
+state 58
+	sentencias : sentencias sen_control .  (5)
+
+	.  reduce 5
+
+
+state 59
+	list_var : ID .  (21)
+
+	.  reduce 21
+
+
+state 60
+	sen_declarativa : tipo list_var . ','  (9)
+	list_var : list_var . ';' ID  (20)
+
+	','  shift 93
+	';'  shift 94
+	.  error
+
+
+state 61
+	sen_ejecutable : asignacion ',' .  (36)
+
+	.  reduce 36
+
+
+state 62
+	sen_ejecutable : inv_funcion ',' .  (37)
+
+	.  reduce 37
+
+
+state 63
+	sen_ejecutable : seleccion ',' .  (38)
+
+	.  reduce 38
+
+
+state 64
+	sen_ejecutable : imprimir ',' .  (39)
+
+	.  reduce 39
+
+
+state 65
+	sen_ejecutable : inv_metodo ',' .  (40)
+
+	.  reduce 40
+
+
+state 66
+	inv_metodo : atributo_clase '(' . exp_aritmetica ')'  (51)
+	inv_metodo : atributo_clase '(' . ')'  (52)
+	inv_metodo : atributo_clase '(' .  (53)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	')'  shift 95
+	','  reduce 53
+
+	CTE  goto 34
+	exp_aritmetica  goto 96
+	atributo_clase  goto 36
+	termino  goto 37
+	factor  goto 38
+
+
+state 67
+	inv_metodo : atributo_clase ')' .  (54)
+
+	.  reduce 54
+
+
+state 68
+	asignacion : atributo_clase '=' . exp_aritmetica  (42)
+	asignacion : atributo_clase '=' .  (45)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	','  reduce 45
+
+	CTE  goto 34
+	exp_aritmetica  goto 97
+	atributo_clase  goto 36
+	termino  goto 37
+	factor  goto 38
+
+
+state 69
+	asignacion : atributo_clase exp_aritmetica .  (46)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
+	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
+	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
+
+	'+'  shift 77
+	'-'  shift 78
+	','  reduce 46
+
+
+state 70
+	factor : ID INCREMENT .  (79)
+
+	.  reduce 79
+
+
+state 71
+	CTE : '-' CTE_SHORT .  (18)
+
+	.  reduce 18
+
+
+state 72
+	CTE : '-' CTE_FLOAT .  (19)
+
+	.  reduce 19
+
+
+state 73
+	inv_funcion : ID '(' ')' .  (48)
+
+	.  reduce 48
+
+
+state 74
+	inv_funcion : ID '(' exp_aritmetica . ')'  (47)
+	inv_funcion : ID '(' exp_aritmetica .  (49)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
+	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
+	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
+
+	'+'  shift 77
+	'-'  shift 78
+	')'  shift 98
+	','  reduce 49
+
+
+state 75
+	asignacion : ID '=' exp_aritmetica .  (41)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
+	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
+	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
+
+	'+'  shift 77
+	'-'  shift 78
+	','  reduce 41
+
+
+state 76
+	atributo_clase : ID '.' ID .  (55)
+
+	.  reduce 55
+
+
+state 77
+	exp_aritmetica : exp_aritmetica '+' . termino  (66)
+	exp_aritmetica : exp_aritmetica '+' . '+' termino  (69)
+	exp_aritmetica : exp_aritmetica '+' . '*' termino  (70)
+	exp_aritmetica : exp_aritmetica '+' . '/' termino  (71)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'+'  shift 99
+	'-'  shift 30
+	'*'  shift 100
+	'/'  shift 101
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	termino  goto 102
+	factor  goto 38
+
+
+state 78
+	exp_aritmetica : exp_aritmetica '-' . termino  (67)
+	exp_aritmetica : exp_aritmetica '-' . '+' termino  (72)
+	exp_aritmetica : exp_aritmetica '-' . "" termino  (73)
+	exp_aritmetica : exp_aritmetica '-' . '/' termino  (74)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'+'  shift 103
+	'-'  shift 30
+	'/'  shift 104
+	""  shift 105
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	termino  goto 106
+	factor  goto 38
+
+
+state 79
+	inv_funcion : ID exp_aritmetica ')' .  (50)
+
+	.  reduce 50
+
+
+state 80
+	termino : termino '*' . factor  (75)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	factor  goto 107
+
+
+state 81
+	termino : termino '/' . factor  (76)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	factor  goto 108
+
+
+state 82
+	seleccion : IF '(' condicion . ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF  (56)
+	seleccion : IF '(' condicion . ')' bloque_sen_ejecutable END_IF  (57)
+	seleccion : IF '(' condicion . ')' ELSE bloque_sen_ejecutable END_IF  (58)
+	seleccion : IF '(' condicion . ')' bloque_sen_ejecutable ELSE END_IF  (59)
+	seleccion : IF '(' condicion . ')' END_IF  (60)
+
+	')'  shift 109
+	.  error
+
+
+state 83
+	clase : CLASS ID '{' . '}'  (102)
+	clase : CLASS ID '{' . cuerpo_clase '}'  (103)
+
+	CLASS  shift 6
+	VOID  shift 7
+	SHORT  shift 9
+	UINT  shift 10
+	FLOAT  shift 11
+	'}'  shift 110
+	.  error
+
+	sen_declarativa  goto 85
+	tipo  goto 17
+	funcion  goto 18
+	clase  goto 19
+	cuerpo_clase  goto 111
+
+
+state 84
+	clase : CLASS ID ',' .  (104)
+
+	.  reduce 104
+
+
+state 85
+	cuerpo_clase : sen_declarativa .  (107)
+
+	.  reduce 107
+
+
+state 86
+	clase : CLASS ID cuerpo_clase . '}'  (105)
+	cuerpo_clase : cuerpo_clase . sen_declarativa  (106)
+
+	CLASS  shift 6
+	VOID  shift 7
+	SHORT  shift 9
+	UINT  shift 10
+	FLOAT  shift 11
+	'}'  shift 112
+	.  error
+
+	sen_declarativa  goto 113
+	tipo  goto 17
+	funcion  goto 18
+	clase  goto 19
+
+
+state 87
+	funcion : VOID ID '(' . parametro ')' '{' cuerpo_funcion '}'  (22)
+	funcion : VOID ID '(' . ')' '{' cuerpo_funcion '}'  (23)
+	funcion : VOID ID '(' . parametro ')' cuerpo_funcion '}'  (24)
+	funcion : VOID ID '(' . ')' cuerpo_funcion '}'  (25)
+
+	ID  shift 114
+	SHORT  shift 9
+	UINT  shift 10
+	FLOAT  shift 11
+	')'  shift 115
+	.  error
+
+	tipo  goto 116
+	parametro  goto 117
+
+
+state 88
+	sen_control : WHILE '(' condicion . ')' DO bloque_sen_ejecutable ','  (97)
+	sen_control : WHILE '(' condicion . DO bloque_sen_ejecutable ','  (99)
+	sen_control : WHILE '(' condicion . ')' DO ','  (101)
+
+	DO  shift 118
+	')'  shift 119
+	.  error
+
+
+state 89
+	condicion : exp_aritmetica comparador . exp_aritmetica  (61)
+	condicion : exp_aritmetica comparador .  (62)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	DO  reduce 62
+	')'  reduce 62
+
+	CTE  goto 34
+	exp_aritmetica  goto 120
+	atributo_clase  goto 36
+	termino  goto 37
+	factor  goto 38
+
+
+state 90
+	sen_control : WHILE condicion DO . bloque_sen_ejecutable ','  (100)
+
+	ID  shift 3
+	IF  shift 4
+	PRINT  shift 5
+	'{'  shift 121
+	'='  shift 12
+	.  error
+
+	sen_ejecutable  goto 122
+	asignacion  goto 20
+	inv_funcion  goto 21
+	seleccion  goto 22
+	imprimir  goto 23
+	inv_metodo  goto 24
+	atributo_clase  goto 25
+	bloque_sen_ejecutable  goto 123
+	sen_ejecutable_r  goto 124
+
+
+state 91
+	sen_control : WHILE condicion ')' . DO bloque_sen_ejecutable ','  (98)
+
+	DO  shift 125
+	.  error
+
+
+state 92
+	condicion : comparador exp_aritmetica .  (63)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
+	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
+	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
+
+	'+'  shift 77
+	'-'  shift 78
+	DO  reduce 63
+	')'  reduce 63
+
+
+state 93
+	sen_declarativa : tipo list_var ',' .  (9)
+
+	.  reduce 9
+
+
+state 94
+	list_var : list_var ';' . ID  (20)
+
+	ID  shift 126
+	.  error
+
+
+state 95
+	inv_metodo : atributo_clase '(' ')' .  (52)
+
+	.  reduce 52
+
+
+state 96
+	inv_metodo : atributo_clase '(' exp_aritmetica . ')'  (51)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
+	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
+	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
+
+	'+'  shift 77
+	'-'  shift 78
+	')'  shift 127
+	.  error
+
+
+state 97
+	asignacion : atributo_clase '=' exp_aritmetica .  (42)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
+	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
+	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
+
+	'+'  shift 77
+	'-'  shift 78
+	','  reduce 42
+
+
+state 98
+	inv_funcion : ID '(' exp_aritmetica ')' .  (47)
+
+	.  reduce 47
+
+
+state 99
+	exp_aritmetica : exp_aritmetica '+' '+' . termino  (69)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	termino  goto 128
+	factor  goto 38
+
+
+state 100
+	exp_aritmetica : exp_aritmetica '+' '*' . termino  (70)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	termino  goto 129
+	factor  goto 38
+
+
+state 101
+	exp_aritmetica : exp_aritmetica '+' '/' . termino  (71)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	termino  goto 130
+	factor  goto 38
+
+
+state 102
+	exp_aritmetica : exp_aritmetica '+' termino .  (66)
 	termino : termino . '*' factor  (75)
 	termino : termino . '/' factor  (76)
 
-	'*'  shift 77
-	'/'  shift 78
+	'*'  shift 80
+	'/'  shift 81
+	DO  reduce 66
+	GREATER_EQUAL  reduce 66
+	LESS_EQUAL  reduce 66
+	EQUAL  reduce 66
+	NOT_EQUAL  reduce 66
+	'+'  reduce 66
+	'-'  reduce 66
+	','  reduce 66
+	')'  reduce 66
+	'<'  reduce 66
+	'>'  reduce 66
+
+
+state 103
+	exp_aritmetica : exp_aritmetica '-' '+' . termino  (72)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	termino  goto 131
+	factor  goto 38
+
+
+state 104
+	exp_aritmetica : exp_aritmetica '-' '/' . termino  (74)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	termino  goto 132
+	factor  goto 38
+
+
+state 105
+	exp_aritmetica : exp_aritmetica '-' "" . termino  (73)
+
+	ID  shift 26
+	CTE_SHORT  shift 27
+	CTE_UINT  shift 28
+	CTE_FLOAT  shift 29
+	'-'  shift 30
+	.  error
+
+	CTE  goto 34
+	atributo_clase  goto 36
+	termino  goto 133
+	factor  goto 38
+
+
+state 106
+	exp_aritmetica : exp_aritmetica '-' termino .  (67)
+	termino : termino . '*' factor  (75)
+	termino : termino . '/' factor  (76)
+
+	'*'  shift 80
+	'/'  shift 81
+	DO  reduce 67
+	GREATER_EQUAL  reduce 67
+	LESS_EQUAL  reduce 67
+	EQUAL  reduce 67
+	NOT_EQUAL  reduce 67
+	'+'  reduce 67
+	'-'  reduce 67
+	','  reduce 67
+	')'  reduce 67
+	'<'  reduce 67
+	'>'  reduce 67
+
+
+state 107
+	termino : termino '*' factor .  (75)
+
+	.  reduce 75
+
+
+state 108
+	termino : termino '/' factor .  (76)
+
+	.  reduce 76
+
+
+state 109
+	seleccion : IF '(' condicion ')' . bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF  (56)
+	seleccion : IF '(' condicion ')' . bloque_sen_ejecutable END_IF  (57)
+	seleccion : IF '(' condicion ')' . ELSE bloque_sen_ejecutable END_IF  (58)
+	seleccion : IF '(' condicion ')' . bloque_sen_ejecutable ELSE END_IF  (59)
+	seleccion : IF '(' condicion ')' . END_IF  (60)
+
+	ID  shift 3
+	IF  shift 4
+	ELSE  shift 134
+	END_IF  shift 135
+	PRINT  shift 5
+	'{'  shift 121
+	'='  shift 12
+	.  error
+
+	sen_ejecutable  goto 122
+	asignacion  goto 20
+	inv_funcion  goto 21
+	seleccion  goto 22
+	imprimir  goto 23
+	inv_metodo  goto 24
+	atributo_clase  goto 25
+	bloque_sen_ejecutable  goto 136
+	sen_ejecutable_r  goto 124
+
+
+state 110
+	clase : CLASS ID '{' '}' .  (102)
+
+	.  reduce 102
+
+
+state 111
+	clase : CLASS ID '{' cuerpo_clase . '}'  (103)
+	cuerpo_clase : cuerpo_clase . sen_declarativa  (106)
+
+	CLASS  shift 6
+	VOID  shift 7
+	SHORT  shift 9
+	UINT  shift 10
+	FLOAT  shift 11
+	'}'  shift 137
+	.  error
+
+	sen_declarativa  goto 113
+	tipo  goto 17
+	funcion  goto 18
+	clase  goto 19
+
+
+state 112
+	clase : CLASS ID cuerpo_clase '}' .  (105)
+
+	.  reduce 105
+
+
+state 113
+	cuerpo_clase : cuerpo_clase sen_declarativa .  (106)
+
+	.  reduce 106
+
+
+state 114
+	parametro : ID .  (28)
+
+	.  reduce 28
+
+
+state 115
+	funcion : VOID ID '(' ')' . '{' cuerpo_funcion '}'  (23)
+	funcion : VOID ID '(' ')' . cuerpo_funcion '}'  (25)
+
+	ID  shift 3
+	IF  shift 4
+	PRINT  shift 5
+	CLASS  shift 6
+	VOID  shift 7
+	SHORT  shift 9
+	UINT  shift 10
+	FLOAT  shift 11
+	'{'  shift 138
+	'='  shift 12
+	.  error
+
+	sen_declarativa  goto 139
+	sen_ejecutable  goto 140
+	tipo  goto 17
+	funcion  goto 18
+	clase  goto 19
+	cuerpo_funcion  goto 141
+	asignacion  goto 20
+	inv_funcion  goto 21
+	seleccion  goto 22
+	imprimir  goto 23
+	inv_metodo  goto 24
+	atributo_clase  goto 25
+
+
+state 116
+	parametro : tipo . ID  (26)
+	parametro : tipo .  (27)
+
+	ID  shift 142
+	')'  reduce 27
+
+
+state 117
+	funcion : VOID ID '(' parametro . ')' '{' cuerpo_funcion '}'  (22)
+	funcion : VOID ID '(' parametro . ')' cuerpo_funcion '}'  (24)
+
+	')'  shift 143
+	.  error
+
+
+state 118
+	sen_control : WHILE '(' condicion DO . bloque_sen_ejecutable ','  (99)
+
+	ID  shift 3
+	IF  shift 4
+	PRINT  shift 5
+	'{'  shift 121
+	'='  shift 12
+	.  error
+
+	sen_ejecutable  goto 122
+	asignacion  goto 20
+	inv_funcion  goto 21
+	seleccion  goto 22
+	imprimir  goto 23
+	inv_metodo  goto 24
+	atributo_clase  goto 25
+	bloque_sen_ejecutable  goto 144
+	sen_ejecutable_r  goto 124
+
+
+state 119
+	sen_control : WHILE '(' condicion ')' . DO bloque_sen_ejecutable ','  (97)
+	sen_control : WHILE '(' condicion ')' . DO ','  (101)
+
+	DO  shift 145
+	.  error
+
+
+state 120
+	condicion : exp_aritmetica comparador exp_aritmetica .  (61)
+	exp_aritmetica : exp_aritmetica . '+' termino  (66)
+	exp_aritmetica : exp_aritmetica . '-' termino  (67)
+	exp_aritmetica : exp_aritmetica . '+' '+' termino  (69)
+	exp_aritmetica : exp_aritmetica . '+' '*' termino  (70)
+	exp_aritmetica : exp_aritmetica . '+' '/' termino  (71)
+	exp_aritmetica : exp_aritmetica . '-' '+' termino  (72)
+	exp_aritmetica : exp_aritmetica . '-' "" termino  (73)
+	exp_aritmetica : exp_aritmetica . '-' '/' termino  (74)
+
+	'+'  shift 77
+	'-'  shift 78
+	DO  reduce 61
+	')'  reduce 61
+
+
+state 121
+	bloque_sen_ejecutable : '{' . sen_ejecutable_r '}'  (89)
+	bloque_sen_ejecutable : '{' . sen_ejecutable_r  (91)
+	bloque_sen_ejecutable : '{' . '}'  (92)
+
+	ID  shift 3
+	IF  shift 4
+	PRINT  shift 5
+	'}'  shift 146
+	'='  shift 12
+	.  error
+
+	sen_ejecutable  goto 147
+	asignacion  goto 20
+	inv_funcion  goto 21
+	seleccion  goto 22
+	imprimir  goto 23
+	inv_metodo  goto 24
+	atributo_clase  goto 25
+	sen_ejecutable_r  goto 148
+
+
+state 122
+	bloque_sen_ejecutable : sen_ejecutable .  (88)
+	sen_ejecutable_r : sen_ejecutable .  (94)
+
+	ID  reduce 94
+	IF  reduce 94
+	ELSE  reduce 88
+	END_IF  reduce 88
+	PRINT  reduce 94
+	'}'  reduce 94
+	','  reduce 88
+	'='  reduce 94
+
+
+state 123
+	sen_control : WHILE condicion DO bloque_sen_ejecutable . ','  (100)
+
+	','  shift 149
+	.  error
+
+
+state 124
+	bloque_sen_ejecutable : sen_ejecutable_r . '}'  (90)
+	sen_ejecutable_r : sen_ejecutable_r . sen_ejecutable  (93)
+
+	ID  shift 3
+	IF  shift 4
+	PRINT  shift 5
+	'}'  shift 150
+	'='  shift 12
+	.  error
+
+	sen_ejecutable  goto 151
+	asignacion  goto 20
+	inv_funcion  goto 21
+	seleccion  goto 22
+	imprimir  goto 23
+	inv_metodo  goto 24
+	atributo_clase  goto 25
+
+
+state 125
+	sen_control : WHILE condicion ')' DO . bloque_sen_ejecutable ','  (98)
+
+	ID  shift 3
+	IF  shift 4
+	PRINT  shift 5
+	'{'  shift 121
+	'='  shift 12
+	.  error
+
+	sen_ejecutable  goto 122
+	asignacion  goto 20
+	inv_funcion  goto 21
+	seleccion  goto 22
+	imprimir  goto 23
+	inv_metodo  goto 24
+	atributo_clase  goto 25
+	bloque_sen_ejecutable  goto 152
+	sen_ejecutable_r  goto 124
+
+
+state 126
+	list_var : list_var ';' ID .  (20)
+
+	.  reduce 20
+
+
+state 127
+	inv_metodo : atributo_clase '(' exp_aritmetica ')' .  (51)
+
+	.  reduce 51
+
+
+state 128
+	exp_aritmetica : exp_aritmetica '+' '+' termino .  (69)
+	termino : termino . '*' factor  (75)
+	termino : termino . '/' factor  (76)
+
+	'*'  shift 80
+	'/'  shift 81
 	DO  reduce 69
 	GREATER_EQUAL  reduce 69
 	LESS_EQUAL  reduce 69
@@ -1779,13 +1708,33 @@ state 130
 	'>'  reduce 69
 
 
-state 131
-	exp_aritmetica : exp_aritmetica '-' '+' termino .  (71)
+state 129
+	exp_aritmetica : exp_aritmetica '+' '*' termino .  (70)
 	termino : termino . '*' factor  (75)
 	termino : termino . '/' factor  (76)
 
-	'*'  shift 77
-	'/'  shift 78
+	'*'  shift 80
+	'/'  shift 81
+	DO  reduce 70
+	GREATER_EQUAL  reduce 70
+	LESS_EQUAL  reduce 70
+	EQUAL  reduce 70
+	NOT_EQUAL  reduce 70
+	'+'  reduce 70
+	'-'  reduce 70
+	','  reduce 70
+	')'  reduce 70
+	'<'  reduce 70
+	'>'  reduce 70
+
+
+state 130
+	exp_aritmetica : exp_aritmetica '+' '/' termino .  (71)
+	termino : termino . '*' factor  (75)
+	termino : termino . '/' factor  (76)
+
+	'*'  shift 80
+	'/'  shift 81
 	DO  reduce 71
 	GREATER_EQUAL  reduce 71
 	LESS_EQUAL  reduce 71
@@ -1799,13 +1748,13 @@ state 131
 	'>'  reduce 71
 
 
-state 132
-	exp_aritmetica : exp_aritmetica '-' '-' termino .  (72)
+state 131
+	exp_aritmetica : exp_aritmetica '-' '+' termino .  (72)
 	termino : termino . '*' factor  (75)
 	termino : termino . '/' factor  (76)
 
-	'*'  shift 77
-	'/'  shift 78
+	'*'  shift 80
+	'/'  shift 81
 	DO  reduce 72
 	GREATER_EQUAL  reduce 72
 	LESS_EQUAL  reduce 72
@@ -1819,13 +1768,13 @@ state 132
 	'>'  reduce 72
 
 
-state 133
+state 132
 	exp_aritmetica : exp_aritmetica '-' '/' termino .  (74)
 	termino : termino . '*' factor  (75)
 	termino : termino . '/' factor  (76)
 
-	'*'  shift 77
-	'/'  shift 78
+	'*'  shift 80
+	'/'  shift 81
 	DO  reduce 74
 	GREATER_EQUAL  reduce 74
 	LESS_EQUAL  reduce 74
@@ -1839,13 +1788,13 @@ state 133
 	'>'  reduce 74
 
 
-state 134
+state 133
 	exp_aritmetica : exp_aritmetica '-' "" termino .  (73)
 	termino : termino . '*' factor  (75)
 	termino : termino . '/' factor  (76)
 
-	'*'  shift 77
-	'/'  shift 78
+	'*'  shift 80
+	'/'  shift 81
 	DO  reduce 73
 	GREATER_EQUAL  reduce 73
 	LESS_EQUAL  reduce 73
@@ -1859,51 +1808,51 @@ state 134
 	'>'  reduce 73
 
 
-state 135
-	seleccion : IF '(' condicion ')' ELSE . bloque_sen_ejecutable END_IF  (56)
+state 134
+	seleccion : IF '(' condicion ')' ELSE . bloque_sen_ejecutable END_IF  (58)
 
 	ID  shift 3
 	IF  shift 4
 	PRINT  shift 5
-	'{'  shift 120
+	'{'  shift 121
 	'='  shift 12
 	.  error
 
-	sen_ejecutable  goto 121
+	sen_ejecutable  goto 122
 	asignacion  goto 20
 	inv_funcion  goto 21
 	seleccion  goto 22
 	imprimir  goto 23
 	inv_metodo  goto 24
 	atributo_clase  goto 25
-	bloque_sen_ejecutable  goto 154
-	sen_ejecutable_r  goto 123
+	bloque_sen_ejecutable  goto 153
+	sen_ejecutable_r  goto 124
+
+
+state 135
+	seleccion : IF '(' condicion ')' END_IF .  (60)
+
+	.  reduce 60
 
 
 state 136
-	seleccion : IF '(' condicion ')' END_IF .  (58)
+	seleccion : IF '(' condicion ')' bloque_sen_ejecutable . ELSE bloque_sen_ejecutable END_IF  (56)
+	seleccion : IF '(' condicion ')' bloque_sen_ejecutable . END_IF  (57)
+	seleccion : IF '(' condicion ')' bloque_sen_ejecutable . ELSE END_IF  (59)
 
-	.  reduce 58
-
-
-state 137
-	seleccion : IF '(' condicion ')' bloque_sen_ejecutable . ELSE bloque_sen_ejecutable END_IF  (54)
-	seleccion : IF '(' condicion ')' bloque_sen_ejecutable . END_IF  (55)
-	seleccion : IF '(' condicion ')' bloque_sen_ejecutable . ELSE END_IF  (57)
-
-	ELSE  shift 155
-	END_IF  shift 156
+	ELSE  shift 154
+	END_IF  shift 155
 	.  error
 
 
-state 138
+state 137
 	clase : CLASS ID '{' cuerpo_clase '}' .  (103)
 
 	.  reduce 103
 
 
-state 139
-	funcion : VOID ID '(' ')' '{' . cuerpo_funcion '}'  (21)
+state 138
+	funcion : VOID ID '(' ')' '{' . cuerpo_funcion '}'  (23)
 
 	ID  shift 3
 	IF  shift 4
@@ -1916,12 +1865,12 @@ state 139
 	'='  shift 12
 	.  error
 
-	sen_declarativa  goto 140
-	sen_ejecutable  goto 141
+	sen_declarativa  goto 139
+	sen_ejecutable  goto 140
 	tipo  goto 17
 	funcion  goto 18
 	clase  goto 19
-	cuerpo_funcion  goto 157
+	cuerpo_funcion  goto 156
 	asignacion  goto 20
 	inv_funcion  goto 21
 	seleccion  goto 22
@@ -1930,74 +1879,74 @@ state 139
 	atributo_clase  goto 25
 
 
-state 140
-	cuerpo_funcion : sen_declarativa . sen_retorno ','  (30)
+state 139
+	cuerpo_funcion : sen_declarativa . sen_retorno ','  (32)
 
-	RETURN  shift 158
+	RETURN  shift 157
 	.  error
+
+	sen_retorno  goto 158
+
+
+state 140
+	cuerpo_funcion : sen_ejecutable . sen_retorno ','  (33)
+	cuerpo_funcion : sen_ejecutable .  (34)
+
+	RETURN  shift 157
+	ID  reduce 34
+	IF  reduce 34
+	PRINT  reduce 34
+	CLASS  reduce 34
+	VOID  reduce 34
+	SHORT  reduce 34
+	UINT  reduce 34
+	FLOAT  reduce 34
+	'}'  reduce 34
+	'='  reduce 34
 
 	sen_retorno  goto 159
 
 
 state 141
-	cuerpo_funcion : sen_ejecutable . sen_retorno ','  (31)
-	cuerpo_funcion : sen_ejecutable .  (32)
+	funcion : VOID ID '(' ')' cuerpo_funcion . '}'  (25)
+	cuerpo_funcion : cuerpo_funcion . sen_declarativa sen_retorno ','  (29)
+	cuerpo_funcion : cuerpo_funcion . sen_ejecutable sen_retorno ','  (30)
+	cuerpo_funcion : cuerpo_funcion . sen_ejecutable  (31)
 
-	RETURN  shift 158
-	ID  reduce 32
-	IF  reduce 32
-	PRINT  reduce 32
-	CLASS  reduce 32
-	VOID  reduce 32
-	SHORT  reduce 32
-	UINT  reduce 32
-	FLOAT  reduce 32
-	'}'  reduce 32
-	'='  reduce 32
+	ID  shift 3
+	IF  shift 4
+	PRINT  shift 5
+	CLASS  shift 6
+	VOID  shift 7
+	SHORT  shift 9
+	UINT  shift 10
+	FLOAT  shift 11
+	'}'  shift 160
+	'='  shift 12
+	.  error
 
-	sen_retorno  goto 160
+	sen_declarativa  goto 161
+	sen_ejecutable  goto 162
+	tipo  goto 17
+	funcion  goto 18
+	clase  goto 19
+	asignacion  goto 20
+	inv_funcion  goto 21
+	seleccion  goto 22
+	imprimir  goto 23
+	inv_metodo  goto 24
+	atributo_clase  goto 25
 
 
 state 142
-	funcion : VOID ID '(' ')' cuerpo_funcion . '}'  (23)
-	cuerpo_funcion : cuerpo_funcion . sen_declarativa sen_retorno ','  (27)
-	cuerpo_funcion : cuerpo_funcion . sen_ejecutable sen_retorno ','  (28)
-	cuerpo_funcion : cuerpo_funcion . sen_ejecutable  (29)
+	parametro : tipo ID .  (26)
 
-	ID  shift 3
-	IF  shift 4
-	PRINT  shift 5
-	CLASS  shift 6
-	VOID  shift 7
-	SHORT  shift 9
-	UINT  shift 10
-	FLOAT  shift 11
-	'}'  shift 161
-	'='  shift 12
-	.  error
-
-	sen_declarativa  goto 162
-	sen_ejecutable  goto 163
-	tipo  goto 17
-	funcion  goto 18
-	clase  goto 19
-	asignacion  goto 20
-	inv_funcion  goto 21
-	seleccion  goto 22
-	imprimir  goto 23
-	inv_metodo  goto 24
-	atributo_clase  goto 25
+	.  reduce 26
 
 
 state 143
-	parametro : tipo ID .  (24)
-
-	.  reduce 24
-
-
-state 144
-	funcion : VOID ID '(' parametro ')' . '{' cuerpo_funcion '}'  (20)
-	funcion : VOID ID '(' parametro ')' . cuerpo_funcion '}'  (22)
+	funcion : VOID ID '(' parametro ')' . '{' cuerpo_funcion '}'  (22)
+	funcion : VOID ID '(' parametro ')' . cuerpo_funcion '}'  (24)
 
 	ID  shift 3
 	IF  shift 4
@@ -2007,16 +1956,16 @@ state 144
 	SHORT  shift 9
 	UINT  shift 10
 	FLOAT  shift 11
-	'{'  shift 164
+	'{'  shift 163
 	'='  shift 12
 	.  error
 
-	sen_declarativa  goto 140
-	sen_ejecutable  goto 141
+	sen_declarativa  goto 139
+	sen_ejecutable  goto 140
 	tipo  goto 17
 	funcion  goto 18
 	clase  goto 19
-	cuerpo_funcion  goto 165
+	cuerpo_funcion  goto 164
 	asignacion  goto 20
 	inv_funcion  goto 21
 	seleccion  goto 22
@@ -2025,49 +1974,49 @@ state 144
 	atributo_clase  goto 25
 
 
-state 145
+state 144
 	sen_control : WHILE '(' condicion DO bloque_sen_ejecutable . ','  (99)
 
-	','  shift 166
+	','  shift 165
 	.  error
 
 
-state 146
+state 145
 	sen_control : WHILE '(' condicion ')' DO . bloque_sen_ejecutable ','  (97)
 	sen_control : WHILE '(' condicion ')' DO . ','  (101)
 
 	ID  shift 3
 	IF  shift 4
 	PRINT  shift 5
-	'{'  shift 120
-	','  shift 167
+	'{'  shift 121
+	','  shift 166
 	'='  shift 12
 	.  error
 
-	sen_ejecutable  goto 121
+	sen_ejecutable  goto 122
 	asignacion  goto 20
 	inv_funcion  goto 21
 	seleccion  goto 22
 	imprimir  goto 23
 	inv_metodo  goto 24
 	atributo_clase  goto 25
-	bloque_sen_ejecutable  goto 168
-	sen_ejecutable_r  goto 123
+	bloque_sen_ejecutable  goto 167
+	sen_ejecutable_r  goto 124
 
 
-state 147
+state 146
 	bloque_sen_ejecutable : '{' '}' .  (92)
 
 	.  reduce 92
 
 
-state 148
+state 147
 	sen_ejecutable_r : sen_ejecutable .  (94)
 
 	.  reduce 94
 
 
-state 149
+state 148
 	bloque_sen_ejecutable : '{' sen_ejecutable_r . '}'  (89)
 	bloque_sen_ejecutable : '{' sen_ejecutable_r .  (91)
 	sen_ejecutable_r : sen_ejecutable_r . sen_ejecutable  (93)
@@ -2075,13 +2024,13 @@ state 149
 	ID  shift 3
 	IF  shift 4
 	PRINT  shift 5
-	'}'  shift 169
+	'}'  shift 168
 	'='  shift 12
 	ELSE  reduce 91
 	END_IF  reduce 91
 	','  reduce 91
 
-	sen_ejecutable  goto 152
+	sen_ejecutable  goto 151
 	asignacion  goto 20
 	inv_funcion  goto 21
 	seleccion  goto 22
@@ -2090,72 +2039,72 @@ state 149
 	atributo_clase  goto 25
 
 
-state 150
+state 149
 	sen_control : WHILE condicion DO bloque_sen_ejecutable ',' .  (100)
 
 	.  reduce 100
 
 
-state 151
+state 150
 	bloque_sen_ejecutable : sen_ejecutable_r '}' .  (90)
 
 	.  reduce 90
 
 
-state 152
+state 151
 	sen_ejecutable_r : sen_ejecutable_r sen_ejecutable .  (93)
 
 	.  reduce 93
 
 
-state 153
+state 152
 	sen_control : WHILE condicion ')' DO bloque_sen_ejecutable . ','  (98)
 
-	','  shift 170
+	','  shift 169
+	.  error
+
+
+state 153
+	seleccion : IF '(' condicion ')' ELSE bloque_sen_ejecutable . END_IF  (58)
+
+	END_IF  shift 170
 	.  error
 
 
 state 154
-	seleccion : IF '(' condicion ')' ELSE bloque_sen_ejecutable . END_IF  (56)
-
-	END_IF  shift 171
-	.  error
-
-
-state 155
-	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE . bloque_sen_ejecutable END_IF  (54)
-	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE . END_IF  (57)
+	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE . bloque_sen_ejecutable END_IF  (56)
+	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE . END_IF  (59)
 
 	ID  shift 3
 	IF  shift 4
-	END_IF  shift 172
+	END_IF  shift 171
 	PRINT  shift 5
-	'{'  shift 120
+	'{'  shift 121
 	'='  shift 12
 	.  error
 
-	sen_ejecutable  goto 121
+	sen_ejecutable  goto 122
 	asignacion  goto 20
 	inv_funcion  goto 21
 	seleccion  goto 22
 	imprimir  goto 23
 	inv_metodo  goto 24
 	atributo_clase  goto 25
-	bloque_sen_ejecutable  goto 173
-	sen_ejecutable_r  goto 123
+	bloque_sen_ejecutable  goto 172
+	sen_ejecutable_r  goto 124
+
+
+state 155
+	seleccion : IF '(' condicion ')' bloque_sen_ejecutable END_IF .  (57)
+
+	.  reduce 57
 
 
 state 156
-	seleccion : IF '(' condicion ')' bloque_sen_ejecutable END_IF .  (55)
-
-	.  reduce 55
-
-
-state 157
-	funcion : VOID ID '(' ')' '{' cuerpo_funcion . '}'  (21)
-	cuerpo_funcion : cuerpo_funcion . sen_declarativa sen_retorno ','  (27)
-	cuerpo_funcion : cuerpo_funcion . sen_ejecutable sen_retorno ','  (28)
-	cuerpo_funcion : cuerpo_funcion . sen_ejecutable  (29)
+	funcion : VOID ID '(' ')' '{' cuerpo_funcion . '}'  (23)
+	cuerpo_funcion : cuerpo_funcion . sen_declarativa sen_retorno ','  (29)
+	cuerpo_funcion : cuerpo_funcion . sen_ejecutable sen_retorno ','  (30)
+	cuerpo_funcion : cuerpo_funcion . sen_ejecutable  (31)
 
 	ID  shift 3
 	IF  shift 4
@@ -2165,12 +2114,12 @@ state 157
 	SHORT  shift 9
 	UINT  shift 10
 	FLOAT  shift 11
-	'}'  shift 174
+	'}'  shift 173
 	'='  shift 12
 	.  error
 
-	sen_declarativa  goto 162
-	sen_ejecutable  goto 163
+	sen_declarativa  goto 161
+	sen_ejecutable  goto 162
 	tipo  goto 17
 	funcion  goto 18
 	clase  goto 19
@@ -2182,62 +2131,62 @@ state 157
 	atributo_clase  goto 25
 
 
-state 158
-	sen_retorno : RETURN .  (33)
+state 157
+	sen_retorno : RETURN .  (35)
 
-	.  reduce 33
+	.  reduce 35
+
+
+state 158
+	cuerpo_funcion : sen_declarativa sen_retorno . ','  (32)
+
+	','  shift 174
+	.  error
 
 
 state 159
-	cuerpo_funcion : sen_declarativa sen_retorno . ','  (30)
+	cuerpo_funcion : sen_ejecutable sen_retorno . ','  (33)
 
 	','  shift 175
 	.  error
 
 
 state 160
-	cuerpo_funcion : sen_ejecutable sen_retorno . ','  (31)
+	funcion : VOID ID '(' ')' cuerpo_funcion '}' .  (25)
 
-	','  shift 176
-	.  error
+	.  reduce 25
 
 
 state 161
-	funcion : VOID ID '(' ')' cuerpo_funcion '}' .  (23)
+	cuerpo_funcion : cuerpo_funcion sen_declarativa . sen_retorno ','  (29)
 
-	.  reduce 23
+	RETURN  shift 157
+	.  error
+
+	sen_retorno  goto 176
 
 
 state 162
-	cuerpo_funcion : cuerpo_funcion sen_declarativa . sen_retorno ','  (27)
+	cuerpo_funcion : cuerpo_funcion sen_ejecutable . sen_retorno ','  (30)
+	cuerpo_funcion : cuerpo_funcion sen_ejecutable .  (31)
 
-	RETURN  shift 158
-	.  error
+	RETURN  shift 157
+	ID  reduce 31
+	IF  reduce 31
+	PRINT  reduce 31
+	CLASS  reduce 31
+	VOID  reduce 31
+	SHORT  reduce 31
+	UINT  reduce 31
+	FLOAT  reduce 31
+	'}'  reduce 31
+	'='  reduce 31
 
 	sen_retorno  goto 177
 
 
 state 163
-	cuerpo_funcion : cuerpo_funcion sen_ejecutable . sen_retorno ','  (28)
-	cuerpo_funcion : cuerpo_funcion sen_ejecutable .  (29)
-
-	RETURN  shift 158
-	ID  reduce 29
-	IF  reduce 29
-	PRINT  reduce 29
-	CLASS  reduce 29
-	VOID  reduce 29
-	SHORT  reduce 29
-	UINT  reduce 29
-	FLOAT  reduce 29
-	'}'  reduce 29
-	'='  reduce 29
-
-	sen_retorno  goto 178
-
-
-state 164
-	funcion : VOID ID '(' parametro ')' '{' . cuerpo_funcion '}'  (20)
+	funcion : VOID ID '(' parametro ')' '{' . cuerpo_funcion '}'  (22)
 
 	ID  shift 3
 	IF  shift 4
@@ -2250,12 +2199,43 @@ state 164
 	'='  shift 12
 	.  error
 
-	sen_declarativa  goto 140
-	sen_ejecutable  goto 141
+	sen_declarativa  goto 139
+	sen_ejecutable  goto 140
 	tipo  goto 17
 	funcion  goto 18
 	clase  goto 19
-	cuerpo_funcion  goto 179
+	cuerpo_funcion  goto 178
+	asignacion  goto 20
+	inv_funcion  goto 21
+	seleccion  goto 22
+	imprimir  goto 23
+	inv_metodo  goto 24
+	atributo_clase  goto 25
+
+
+state 164
+	funcion : VOID ID '(' parametro ')' cuerpo_funcion . '}'  (24)
+	cuerpo_funcion : cuerpo_funcion . sen_declarativa sen_retorno ','  (29)
+	cuerpo_funcion : cuerpo_funcion . sen_ejecutable sen_retorno ','  (30)
+	cuerpo_funcion : cuerpo_funcion . sen_ejecutable  (31)
+
+	ID  shift 3
+	IF  shift 4
+	PRINT  shift 5
+	CLASS  shift 6
+	VOID  shift 7
+	SHORT  shift 9
+	UINT  shift 10
+	FLOAT  shift 11
+	'}'  shift 179
+	'='  shift 12
+	.  error
+
+	sen_declarativa  goto 161
+	sen_ejecutable  goto 162
+	tipo  goto 17
+	funcion  goto 18
+	clase  goto 19
 	asignacion  goto 20
 	inv_funcion  goto 21
 	seleccion  goto 22
@@ -2265,123 +2245,92 @@ state 164
 
 
 state 165
-	funcion : VOID ID '(' parametro ')' cuerpo_funcion . '}'  (22)
-	cuerpo_funcion : cuerpo_funcion . sen_declarativa sen_retorno ','  (27)
-	cuerpo_funcion : cuerpo_funcion . sen_ejecutable sen_retorno ','  (28)
-	cuerpo_funcion : cuerpo_funcion . sen_ejecutable  (29)
-
-	ID  shift 3
-	IF  shift 4
-	PRINT  shift 5
-	CLASS  shift 6
-	VOID  shift 7
-	SHORT  shift 9
-	UINT  shift 10
-	FLOAT  shift 11
-	'}'  shift 180
-	'='  shift 12
-	.  error
-
-	sen_declarativa  goto 162
-	sen_ejecutable  goto 163
-	tipo  goto 17
-	funcion  goto 18
-	clase  goto 19
-	asignacion  goto 20
-	inv_funcion  goto 21
-	seleccion  goto 22
-	imprimir  goto 23
-	inv_metodo  goto 24
-	atributo_clase  goto 25
-
-
-state 166
 	sen_control : WHILE '(' condicion DO bloque_sen_ejecutable ',' .  (99)
 
 	.  reduce 99
 
 
-state 167
+state 166
 	sen_control : WHILE '(' condicion ')' DO ',' .  (101)
 
 	.  reduce 101
 
 
-state 168
+state 167
 	sen_control : WHILE '(' condicion ')' DO bloque_sen_ejecutable . ','  (97)
 
-	','  shift 181
+	','  shift 180
 	.  error
 
 
-state 169
+state 168
 	bloque_sen_ejecutable : '{' sen_ejecutable_r '}' .  (89)
 
 	.  reduce 89
 
 
-state 170
+state 169
 	sen_control : WHILE condicion ')' DO bloque_sen_ejecutable ',' .  (98)
 
 	.  reduce 98
 
 
-state 171
-	seleccion : IF '(' condicion ')' ELSE bloque_sen_ejecutable END_IF .  (56)
+state 170
+	seleccion : IF '(' condicion ')' ELSE bloque_sen_ejecutable END_IF .  (58)
 
-	.  reduce 56
+	.  reduce 58
+
+
+state 171
+	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE END_IF .  (59)
+
+	.  reduce 59
 
 
 state 172
-	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE END_IF .  (57)
+	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable . END_IF  (56)
 
-	.  reduce 57
-
-
-state 173
-	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable . END_IF  (54)
-
-	END_IF  shift 182
+	END_IF  shift 181
 	.  error
 
 
-state 174
-	funcion : VOID ID '(' ')' '{' cuerpo_funcion '}' .  (21)
+state 173
+	funcion : VOID ID '(' ')' '{' cuerpo_funcion '}' .  (23)
 
-	.  reduce 21
+	.  reduce 23
+
+
+state 174
+	cuerpo_funcion : sen_declarativa sen_retorno ',' .  (32)
+
+	.  reduce 32
 
 
 state 175
-	cuerpo_funcion : sen_declarativa sen_retorno ',' .  (30)
+	cuerpo_funcion : sen_ejecutable sen_retorno ',' .  (33)
 
-	.  reduce 30
+	.  reduce 33
 
 
 state 176
-	cuerpo_funcion : sen_ejecutable sen_retorno ',' .  (31)
+	cuerpo_funcion : cuerpo_funcion sen_declarativa sen_retorno . ','  (29)
 
-	.  reduce 31
+	','  shift 182
+	.  error
 
 
 state 177
-	cuerpo_funcion : cuerpo_funcion sen_declarativa sen_retorno . ','  (27)
+	cuerpo_funcion : cuerpo_funcion sen_ejecutable sen_retorno . ','  (30)
 
 	','  shift 183
 	.  error
 
 
 state 178
-	cuerpo_funcion : cuerpo_funcion sen_ejecutable sen_retorno . ','  (28)
-
-	','  shift 184
-	.  error
-
-
-state 179
-	funcion : VOID ID '(' parametro ')' '{' cuerpo_funcion . '}'  (20)
-	cuerpo_funcion : cuerpo_funcion . sen_declarativa sen_retorno ','  (27)
-	cuerpo_funcion : cuerpo_funcion . sen_ejecutable sen_retorno ','  (28)
-	cuerpo_funcion : cuerpo_funcion . sen_ejecutable  (29)
+	funcion : VOID ID '(' parametro ')' '{' cuerpo_funcion . '}'  (22)
+	cuerpo_funcion : cuerpo_funcion . sen_declarativa sen_retorno ','  (29)
+	cuerpo_funcion : cuerpo_funcion . sen_ejecutable sen_retorno ','  (30)
+	cuerpo_funcion : cuerpo_funcion . sen_ejecutable  (31)
 
 	ID  shift 3
 	IF  shift 4
@@ -2391,12 +2340,12 @@ state 179
 	SHORT  shift 9
 	UINT  shift 10
 	FLOAT  shift 11
-	'}'  shift 185
+	'}'  shift 184
 	'='  shift 12
 	.  error
 
-	sen_declarativa  goto 162
-	sen_ejecutable  goto 163
+	sen_declarativa  goto 161
+	sen_ejecutable  goto 162
 	tipo  goto 17
 	funcion  goto 18
 	clase  goto 19
@@ -2408,41 +2357,41 @@ state 179
 	atributo_clase  goto 25
 
 
+state 179
+	funcion : VOID ID '(' parametro ')' cuerpo_funcion '}' .  (24)
+
+	.  reduce 24
+
+
 state 180
-	funcion : VOID ID '(' parametro ')' cuerpo_funcion '}' .  (22)
-
-	.  reduce 22
-
-
-state 181
 	sen_control : WHILE '(' condicion ')' DO bloque_sen_ejecutable ',' .  (97)
 
 	.  reduce 97
 
 
-state 182
-	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF .  (54)
+state 181
+	seleccion : IF '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF .  (56)
 
-	.  reduce 54
+	.  reduce 56
+
+
+state 182
+	cuerpo_funcion : cuerpo_funcion sen_declarativa sen_retorno ',' .  (29)
+
+	.  reduce 29
 
 
 state 183
-	cuerpo_funcion : cuerpo_funcion sen_declarativa sen_retorno ',' .  (27)
+	cuerpo_funcion : cuerpo_funcion sen_ejecutable sen_retorno ',' .  (30)
 
-	.  reduce 27
+	.  reduce 30
 
 
 state 184
-	cuerpo_funcion : cuerpo_funcion sen_ejecutable sen_retorno ',' .  (28)
+	funcion : VOID ID '(' parametro ')' '{' cuerpo_funcion '}' .  (22)
 
-	.  reduce 28
-
-
-state 185
-	funcion : VOID ID '(' parametro ')' '{' cuerpo_funcion '}' .  (20)
-
-	.  reduce 20
+	.  reduce 22
 
 
 39 terminals, 28 nonterminals
-108 grammar rules, 186 states
+108 grammar rules, 185 states

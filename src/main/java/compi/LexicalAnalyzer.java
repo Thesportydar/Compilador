@@ -1,15 +1,17 @@
 package compi;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
 import compi.AccionesSemanticas.AccionSemantica;
-import compi.Parser.ParserVal;
 
 public class LexicalAnalyzer {
     private FileReader reader;
     private TransitionMatrix<Integer> stateMatrix;
     private TransitionMatrix<AccionSemantica> accionMatrix;
+    private List<String> errores;
     static final int ESTADO_FINAL = 100;
     Integer TOKEN_RESERVED_WORD = 258;
     int currentChar, linea, ptrActual;
@@ -22,9 +24,10 @@ public class LexicalAnalyzer {
 
 
     public LexicalAnalyzer(String sourceFile, TransitionMatrix<Integer> stateMatrix,
-            TransitionMatrix<AccionSemantica> accionMatrix) {
+            TransitionMatrix<AccionSemantica> accionMatrix, List<String> erroresLexicos) {
         this.stateMatrix = stateMatrix;
         this.accionMatrix = accionMatrix;
+        this.errores = erroresLexicos;
         linea = 1;
         ptrActual = 0;
 
@@ -38,7 +41,7 @@ public class LexicalAnalyzer {
             loadCharMap(charMap, charmap_file);
             loadReservedWords(RESERVED_WORDS, reserved_words_file);
 
-            //charMap.put('\r', 23);
+            charMap.put('\r', 23);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -51,7 +54,6 @@ public class LexicalAnalyzer {
     public Integer nextToken() throws IOException {
         StringBuffer lexema = new StringBuffer();
         int state=0, nextState, currentMappedChar;
-        Boolean leer = true;
         Integer ptr = 0;
         AccionSemantica action;
     
@@ -79,8 +81,12 @@ public class LexicalAnalyzer {
 
                 if (ptr > 0)
                     ptrActual = ptr;
-                else
+                else if (ptr == 0)
                     ptrActual = 0;
+                else {
+                    String error = errores.remove(errores.size() -1);
+                    errores.add("(Linea " + getLine() + "):" + error);
+                } 
 
                 return tkDetectado;
             }
@@ -129,7 +135,7 @@ public class LexicalAnalyzer {
     private void loadCharMap(HashMap<Character, Integer> map, String file) {
         try {
             Scanner scanner = new Scanner(new File(file));
-            scanner.useDelimiter(",|\n|\r");
+            scanner.useDelimiter(",|\\r\\n");
 
             while (scanner.hasNext()) {
                 String s = scanner.next();
@@ -159,7 +165,7 @@ public class LexicalAnalyzer {
     private void loadReservedWords(HashMap<String, Integer> map, String file) {
         try {
             Scanner scanner = new Scanner(new File(file));
-            scanner.useDelimiter(",|\n|\r");
+            scanner.useDelimiter(",|\\r\\n");
 
             while (scanner.hasNext()) {
                 String s = scanner.next();
@@ -172,6 +178,6 @@ public class LexicalAnalyzer {
     }
 
     public static void main(String[] args) {
-        LexicalAnalyzer analyzer = new LexicalAnalyzer("test.csv", null, null);
+        LexicalAnalyzer analyzer = new LexicalAnalyzer("test.csv", null, null, null);
     }
 }
