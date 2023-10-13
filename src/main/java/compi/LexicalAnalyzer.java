@@ -55,15 +55,22 @@ public class LexicalAnalyzer {
         StringBuffer lexema = new StringBuffer();
         int state=0, nextState, currentMappedChar;
         Integer ptr = 0;
+        boolean eol = false;
         AccionSemantica action;
     
         while(currentChar != -1) {
             char currentCharacter = (char) currentChar;
             currentMappedChar = mapChar(currentCharacter);
 
-            if (currentMappedChar == 23)
-                linea++;
-
+            if (currentMappedChar == 23) {
+                if (eol) {
+                    eol = false;
+                    linea++;
+                } else {
+                    eol = true;
+                } 
+            }
+            
             // nuevo estado
             nextState = stateMatrix.get(state, currentMappedChar);
 

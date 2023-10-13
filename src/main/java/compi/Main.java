@@ -72,7 +72,7 @@ public class Main {
         do {
             try {
                 token = la.nextToken();
-                System.out.println("+-" + token + "-+");
+                System.out.println("+-" + token + "-+" + " Linea: "+ la.getLine());
             } catch (IOException e) {
                 System.out.println("Error: " + e.getMessage());
             }

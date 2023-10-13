@@ -1,6 +1,7 @@
 package compi;
 
 import java.util.HashMap;
+import java.util.Set;
 
 public class SymbolTable {
     // hashmap with the SymbolTable, the key is the lexema and has a lot of information
@@ -28,7 +29,7 @@ public class SymbolTable {
         entry.lexema = lexema;
         entry.attributes.put("description", description);
         symbolTable.put(nextPtr, entry);
-        return ++nextPtr;
+        return nextPtr++;
     }
 
     public int getTokenId(Integer ptr) {
@@ -92,9 +93,14 @@ public class SymbolTable {
 
     public void print() {
         System.out.println("Semantic Table:");
-        System.out.println("Ptr\tLexema\tTokenId\tDescription");
+        System.out.println("Ptr\tLexema\tTokenId\tAttributes");
         for (HashMap.Entry<Integer, SymbolTableEntry> entry : symbolTable.entrySet()) {
-            System.out.println(entry.getKey() + "\t" + entry.getValue().lexema + "\t" + entry.getValue().tokenId + "\t" + entry.getValue().attributes.get("description"));
+            System.out.print(entry.getKey() + "\t");
+            System.out.print(entry.getValue().tokenId + "\t");
+            System.out.print(entry.getValue().lexema + "\t");
+            for (HashMap.Entry<String, String> attribute : entry.getValue().attributes.entrySet())
+                System.out.print(attribute.getKey() + ": " + attribute.getValue() + "\t");
+            System.out.println();
         }
     }
 }

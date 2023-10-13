@@ -6,7 +6,7 @@ public class AS9 implements AccionSemantica {
     // dictionary with reserved words
     private List<String> errores;
     static final String[] reservedWords = {
-        "IF", "ELSE", "END_IF", "PRINT", "CLASS", "VOID", "WHILE", "DO", "SHORT", "UINT", "FLOAT"
+        "IF", "ELSE", "END_IF", "PRINT", "CLASS", "VOID", "WHILE", "DO", "SHORT", "UINT", "FLOAT", "RETURN"
     };
 
     public AS9(List<String> errores_lexicos){

@@ -1,5 +1,23 @@
 {
-    IF (var1 < var5)
+    IF (var1)
         var3 = var1 + var2,
     END_IF,
+
+    CLASS clase1,
+
+    CLASS clase1 {
+        SHORT var10,
+    }
+
+    VOID func1 (SHORT par1) {
+        UINT var9,
+        RETURN,
+    }
+
+    VOID func2 (FLOAT par2) {
+        var1= var3 + var5,
+        RETURN,
+    }
+
+    func2),
 }
