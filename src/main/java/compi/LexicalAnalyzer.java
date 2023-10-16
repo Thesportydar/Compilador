@@ -14,6 +14,8 @@ public class LexicalAnalyzer {
     private List<String> errores;
     static final int ESTADO_FINAL = 100;
     Integer TOKEN_RESERVED_WORD = 258;
+    boolean isWindows = System.getProperty("os.name").startsWith("Windows");
+    String eol = System.getProperty("line.separator");
     int currentChar, linea, ptrActual;
 
     HashMap<Character, Integer> charMap;
@@ -41,7 +43,8 @@ public class LexicalAnalyzer {
             loadCharMap(charMap, charmap_file);
             loadReservedWords(RESERVED_WORDS, reserved_words_file);
 
-            charMap.put('\r', 23);
+            if (isWindows)
+                charMap.put('\r', 23);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -149,7 +152,7 @@ public class LexicalAnalyzer {
     private void loadCharMap(HashMap<Character, Integer> map, String file) {
         try {
             Scanner scanner = new Scanner(new File(file));
-            scanner.useDelimiter(",|\\r\\n");
+            scanner.useDelimiter(",|" + eol);
 
             while (scanner.hasNext()) {
                 String s = scanner.next();
@@ -179,7 +182,7 @@ public class LexicalAnalyzer {
     private void loadReservedWords(HashMap<String, Integer> map, String file) {
         try {
             Scanner scanner = new Scanner(new File(file));
-            scanner.useDelimiter(",|\\r\\n");
+            scanner.useDelimiter(",|" + eol);
 
             while (scanner.hasNext()) {
                 String s = scanner.next();

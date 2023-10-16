@@ -15,6 +15,4 @@ Remplazar todos los "\n" por ";"(sed -i "%s/\n/;/g" test.csv)
 ## Consideraciones
 Las dimensiones de la matriz esta hardcodeada.
 
-El salto de linea es por defecto \<crlf\>, debe cambiarse dentro de la clase de LexicalAnalizer.
-
 Hay dos ejecutable de byacc en la carpeta parser, uno para win32 y otro para aarch64.
