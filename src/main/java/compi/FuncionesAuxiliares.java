@@ -6,7 +6,7 @@ import compi.AccionesSemanticas.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Main {
+public class FuncionesAuxiliares {
     public static AccionSemantica getAccionSemantica(String s, SymbolTable st, List<String> erroresLexicos) {
         // en un futuro estaria bueno implementarlo con reflexion
         switch (s) {
@@ -19,7 +19,7 @@ public class Main {
             case "asm4":
                 return new AS1();
             case "asm5":
-                return new AS5(st, 32767, "shortint", 269, erroresLexicos);
+                return new AS5(st, 32768, "shortint", 269, erroresLexicos);
             case "asm6":
                 return new AS5(st, 65535, "uint", 270, erroresLexicos);
             case "asm7":
@@ -63,31 +63,5 @@ public class Main {
         } catch (FileNotFoundException e) {
             System.out.println("File not found: " + filename);
         }
-    }
-
-    public static void parser(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename, SymbolTable st, List<String> erroresLexicos) {
-        LexicalAnalyzer la = new LexicalAnalyzer(filename, mI, mA, erroresLexicos);
-        Integer token = 0;
-
-        do {
-            try {
-                token = la.nextToken();
-                System.out.println("+-" + token + "-+" + " Linea: "+ la.getLine());
-            } catch (IOException e) {
-                System.out.println("Error: " + e.getMessage());
-            }
-        } while (token != 0);
-    }
-
-    public static void main(String[] args) {
-        TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 28);
-        TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 28);
-        SymbolTable st = new SymbolTable();
-        List<String> erroresLexicos = new ArrayList<>();
-        loadMatrixs(mI, mA, "test.csv", st, erroresLexicos);
-
-        parser(mI, mA, "test.txt", st, erroresLexicos);
-
-        st.print();
     }
 }

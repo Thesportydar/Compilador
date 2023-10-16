@@ -1,0 +1,13 @@
+SALIDA ESPERADA:
+2. Parser descarta tokens hasta caracter de sincronizacion
+3. No se puede negar unsigned int
+
+5. Detecta el id var 4 y el '=', Lex descarta caracteres hasta caracter de sincronizacion. Falta exp_aritmetica(Error Grammar)
+7. Trunca el id a 20 caracteres
+8. Trunca el id a 20 caracteres pero ya esta en la tabla de sim
+9. Esta linea se toma como comentario
+10. El resto son todos ids
+11.
+12. Lo toma como ids
+13. Cadena bien escrita
+14. Cadena mal escrita

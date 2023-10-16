@@ -28,6 +28,7 @@ sentencias           : sentencias sen_declarativa
                      | sen_ejecutable
                      | sen_control
                      | sen_declarativa
+                     | error ','                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una sentencia ejecutable");}
                      ;
 
 sen_declarativa      : tipo list_var ','
@@ -45,6 +46,7 @@ CTE                  : CTE_SHORT     {verificarRango($1.ival);}
                      | CTE_FLOAT     {verificarRango($1.ival);}
                      | '-' CTE_SHORT {resolverSigno($2.ival); verificarRango($2.ival);}
                      | '-' CTE_FLOAT {resolverSigno($2.ival); verificarRango($2.ival);}
+                     | '-' CTE_UINT { agregarError(errores_sintacticos, Parser.ERROR, "No se puede negar un unsigned int");}
                      ;
 
 list_var             : list_var ';' ID
@@ -90,21 +92,21 @@ asignacion           : ID '=' exp_aritmetica                {agregarEstructura("
                      | atributo_clase exp_aritmetica    {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un signo igual");}
                      ;
 
-inv_funcion          : ID '(' exp_aritmetica ')'        {agregarEstructura("Invocacion a la funcion ", $1.ival);}
-                     | ID '(' ')'                       {agregarEstructura("Invocacion a la funcion ", $1.ival);}
+inv_funcion          : ID '(' exp_aritmetica ')'        {agregarEstructuraLlamados("Invocacion a la funcion ", $1.ival);}
+                     | ID '(' ')'                       {agregarEstructuraLlamados("Invocacion a la funcion ", $1.ival);}
                      | ID '(' exp_aritmetica            {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | ID exp_aritmetica ')'            {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | ID ')'                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | ID '('                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;
 
-inv_metodo           : atributo_clase '(' exp_aritmetica ')' {agregarEstructura("Invocacion al metodo ", $1.ival);}
-                     | atributo_clase '(' ')'                {agregarEstructura("Invocacion al metodo ", $1.ival);}
+inv_metodo           : atributo_clase '(' exp_aritmetica ')' {agregarEstructuraLlamados("Invocacion al metodo ", $1.ival);}
+                     | atributo_clase '(' ')'                {agregarEstructuraLlamados("Invocacion al metodo ", $1.ival);}
                      | atributo_clase '('               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | atributo_clase ')'               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;
 
-atributo_clase       : ID '.' ID
+atributo_clase       : ID '.' ID                        {$$.ival = agregarAtributo($1.ival, $3.ival);}
                      ;
 
 seleccion            : IF '(' condicion ')' bloque_sen_ejecutable ELSE bloque_sen_ejecutable END_IF {agregarEstructura("IF");}
@@ -223,10 +225,7 @@ void yyerror(String mensaje) {
 int yylex() {
     try {
         int token = lexicalAnalyzer.nextToken();
-        if (lexicalAnalyzer.getPtrActual() > 0)
-            yylval = new ParserVal(lexicalAnalyzer.getPtrActual());
-        else
-            yylval = new ParserVal();
+        yylval = new ParserVal(lexicalAnalyzer.getPtrActual());
 
         if (token == IF || token == PRINT || token == WHILE || token == CLASS || token == 61 || token == VOID) {
             pilaLineas.push(lexicalAnalyzer.getLine());
@@ -270,6 +269,10 @@ private Integer getLinea(){
     }
 }
 
+public void agregarEstructuraLlamados(String s, Integer ptr) {
+    estructuras.add("Linea(" + lexicalAnalyzer.getLine() + "): " + s + st.getLexema(ptr));
+}
+
 public void agregarEstructura(String s) {
     estructuras.add("Linea(" + getLinea().toString() + "): " + s);
 }
@@ -283,24 +286,49 @@ public void agregarClase(Integer id, String description) {
     agregarEstructura(description +" : " + st.getLexema(id));
 }
 
+public Integer agregarAtributo(Integer ptr_lhs, Integer ptr_rhs) {
+    String lexema = st.getLexema(ptr_lhs) + "." + st.getLexema(ptr_rhs);
+    return st.addEntry(lexema, ID, "ATTRIBUTE");
+}
+
 public void resolverSigno(Integer ptr_cte) {
     st.setLexema(ptr_cte, "-" + st.getLexema(ptr_cte));
 }
 
 public void verificarRango(Integer ptr_cte) {
+    if (ptr_cte == -1) return;
     String lexema = st.getLexema(ptr_cte);
     String tipo = st.getAttribute(ptr_cte,"description");
+
     switch (tipo) {
-      case "float":
-        float value_f = Float.parseFloat(lexema);
-        if (!(value_f <= Float.MAX_VALUE && value_f >= FLOAT_MIN || value_f >= -Float.MAX_VALUE && value_f <= -FLOAT_MIN || value_f == 0)){
-            agregarError(errores_sintacticos, Parser.ERROR, "Constante FLOAT fuera de rango");
-        }
-      case "shortint":
-        Short value_s = Short.parseShort(lexema);
-        if (!(value_s <= Short.MAX_VALUE && value_s >= Short.MIN_VALUE)){
-            agregarError(errores_sintacticos, Parser.ERROR, "Constante ShortInt fuera de rango");
-        }
+        case "float":
+            float value_f;
+            try {
+                value_f = Float.parseFloat(lexema);
+            } catch (Exception e) {
+                agregarError(errores_sintacticos, Parser.ERROR,
+                        "No se pudo convertir a float la constante " + lexema);
+                break;
+            }
+            if (!(value_f <= Float.MAX_VALUE && value_f >= FLOAT_MIN ||
+                        value_f >= -Float.MAX_VALUE && value_f <= -FLOAT_MIN || 
+                        value_f == 0)){
+                agregarError(errores_sintacticos, Parser.ERROR, "Constante FLOAT fuera de rango");
+            }
+            break;
+        case "shortint":
+            short value_s;
+            try {
+                value_s = Short.parseShort(lexema);
+            } catch (Exception e) {
+                agregarError(errores_sintacticos, Parser.ERROR,
+                        "No se pudo convertir a shortint la constante " + lexema);
+                break;
+            }
+            if (!(value_s <= Short.MAX_VALUE && value_s >= Short.MIN_VALUE)){
+                agregarError(errores_sintacticos, Parser.ERROR, "Constante ShortInt fuera de rango");
+            }
+            break;
     }
 }
 
@@ -342,8 +370,8 @@ public static void main(String[] args) {
     TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 28);
     SymbolTable sttemp = new SymbolTable();
 
-    Main.loadMatrixs(mI, mA, "test.csv", sttemp, errores_lexicos);
-    Parser parser = new Parser(new LexicalAnalyzer("test.txt", mI, mA, errores_lexicos), sttemp);
+    FuncionesAuxiliares.loadMatrixs(mI, mA, "test.csv", sttemp, errores_lexicos);
+    Parser parser = new Parser(new LexicalAnalyzer(args[0], mI, mA, errores_lexicos), sttemp);
     parser.run();
     
     Parser.imprimirErrores(errores_lexicos, "Errores Lexicos");
@@ -356,5 +384,5 @@ public static void main(String[] args) {
 public Parser(LexicalAnalyzer lexicalAnalyzer, SymbolTable st) {
     this.lexicalAnalyzer = lexicalAnalyzer;
     this.st = st;
-    yydebug = true;
+    //yydebug = true;
 }

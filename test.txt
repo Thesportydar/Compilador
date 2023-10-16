@@ -1,23 +1,15 @@
 {
-    IF (var1)
-        var3 = var1 + var2,
-    END_IF,
-
-    CLASS clase1,
-
-    CLASS clase1 {
-        SHORT var10,
-    }
-
-    VOID func1 (SHORT par1) {
-        UINT var9,
-        RETURN,
-    }
-
-    VOID func2 (FLOAT par2) {
-        var1= var3 + var5,
-        RETURN,
-    }
-
-    func2),
+    * var1,
+    var2 = -1_ui,
+    SHORT var3,
+    var4 = 1_u,
+    FLOAT var_iable,
+    UINT variable1234567890123,
+    SHORT variable123456789012345,
+    ** esto es un comentario
+       multilinea,
+       no se puede hacer eso,
+    float variable,
+    PRINT #hola mundo#,
+    PRINT #hola mundo
 }

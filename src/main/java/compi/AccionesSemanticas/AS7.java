@@ -16,13 +16,17 @@ public class AS7 implements AccionSemantica {
 
     @Override
     public Integer ejecutar(StringBuffer buffer, char c) {
-        float value = Float.parseFloat(buffer.toString());
-        
-        if (value > RANGE) {
-            errores.add("Error: el numero es demasiado grande");
+        Float value;
+        try {
+            value = Float.parseFloat(buffer.toString());
+        } catch (Exception e) {
+            errores.add("Error: float invalido " + buffer.toString());
             return -1;
         }
-
+        if (value > RANGE) {
+            errores.add("Error: float es demasiado grande " + buffer.toString());
+            return -1;
+        }
         return st.addEntry(buffer.toString(), TOKEN_CTE_FLOAT, "float");
     }
 

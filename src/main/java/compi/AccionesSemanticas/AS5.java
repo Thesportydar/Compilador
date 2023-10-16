@@ -19,10 +19,15 @@ public class AS5 implements AccionSemantica {
 
     @Override
     public Integer ejecutar(StringBuffer buffer, char c) {
-        // buffer is a short int. check range
-        int value = Integer.parseInt(buffer.toString());
+        Long value;
+        try {
+             value = Long.parseLong(buffer.toString());
+        } catch (Exception e) {
+            errores.add("Error: " + DESC + " invalid (" + buffer.toString() + ")");
+            return -1;
+        }
         if (value > RANGE) {
-            errores.add("Error: " + DESC + " out of range (" + RANGE + ")");
+            errores.add("Error: " + DESC + " out of range (" + buffer.toString() + ")");
             return -1;
         }
         return st.addEntry(buffer.toString(), ID_TOKEN, DESC);

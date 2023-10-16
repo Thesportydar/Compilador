@@ -53,27 +53,27 @@ public class LexicalAnalyzer {
 
     public Integer nextToken() throws IOException {
         StringBuffer lexema = new StringBuffer();
-        int state=0, nextState, currentMappedChar;
+        int state=0, currentMappedChar;
+        Integer nextState;
         Integer ptr = 0;
-        boolean eol = false;
         AccionSemantica action;
     
         while(currentChar != -1) {
             char currentCharacter = (char) currentChar;
             currentMappedChar = mapChar(currentCharacter);
-
-            if (currentMappedChar == 23) {
-                if (eol) {
-                    eol = false;
-                    linea++;
-                } else {
-                    eol = true;
-                } 
-            }
-            
             // nuevo estado
             nextState = stateMatrix.get(state, currentMappedChar);
 
+            if (nextState == null) {
+                errores.add("(Linea " + getLine() + "):" + "Panic mode. Leyendo hasta el caracter de sincronizacion\n\tCaracter:" + currentCharacter + "\n\tLexema:" + lexema.toString());
+                panicLex();
+                ptrActual = -1;
+                currentChar = reader.read();
+                return 44;
+            }
+            
+            if (currentMappedChar == 23)
+                linea++;
             // accion semantica
             action = accionMatrix.get(state, mapChar(currentCharacter));
             if (action != null)
@@ -93,6 +93,7 @@ public class LexicalAnalyzer {
                 else {
                     String error = errores.remove(errores.size() -1);
                     errores.add("(Linea " + getLine() + "):" + error);
+                    ptrActual = -1;
                 } 
 
                 return tkDetectado;
@@ -120,6 +121,12 @@ public class LexicalAnalyzer {
 
     public int getPtrActual() {
         return ptrActual;
+    }
+
+    public void panicLex() throws IOException {
+        // read until EOL
+        while (currentChar != ',' && currentChar != -1)
+            currentChar = reader.read();
     }
 
     private Character verifySpecialChar(String character) {
