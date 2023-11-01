@@ -14,14 +14,14 @@
     var3 = -3.402823466E+38,
 
     ** fuera de rango maximo
-    var1 = 32768_s,
-    var2 = 65536_ui,
-    var3 = 3.402823466E+39,
+    **var1 = 32768_s,
+    **var2 = 65536_ui,
+    **var3 = 3.402823466E+39,
 
     ** fuera de rango minimo
-    var1 = -32769_s,
+    **var1 = -32769_s,
     var2 = -1_ui,
-    var3 = -3.402823466E+39,
+    **var3 = -3.402823466E+39,
 
     ** float con/sin parte entera,
     ** con/sin parte decimal,
@@ -30,4 +30,6 @@
     var3 = .0,
     var3 = 1.,
     var3 = 1.e-1,
+
+    var1 = var2 + var3 * 2.0,
 }

@@ -27,7 +27,10 @@ public class AS7 implements AccionSemantica {
             errores.add("Error: float es demasiado grande " + buffer.toString());
             return -1;
         }
-        return st.addEntry(buffer.toString(), TOKEN_CTE_FLOAT, "float");
+        Integer ptr = st.addEntry(buffer.toString(), TOKEN_CTE_FLOAT);
+        st.setAttribute(ptr, "tipo", ""+TOKEN_CTE_FLOAT);
+        st.setAttribute(ptr, "uso", "cte");
+        return ptr;
     }
 
     @Override

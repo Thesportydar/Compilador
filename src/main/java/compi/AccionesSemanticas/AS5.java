@@ -30,7 +30,10 @@ public class AS5 implements AccionSemantica {
             errores.add("Error: " + DESC + " out of range (" + buffer.toString() + ")");
             return -1;
         }
-        return st.addEntry(buffer.toString(), ID_TOKEN, DESC);
+        Integer ptr =  st.addEntry(buffer.toString(), ID_TOKEN);
+        st.setAttribute(ptr, "tipo", ""+ID_TOKEN);
+        st.setAttribute(ptr, "uso", "cte");
+        return ptr;
     }
 
     @Override

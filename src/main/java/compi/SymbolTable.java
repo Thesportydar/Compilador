@@ -1,5 +1,6 @@
 package compi;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -16,6 +17,14 @@ public class SymbolTable {
         public SymbolTableEntry() {
             attributes = new HashMap<String, String>();
         }
+
+        public SymbolTableEntry copy() {
+            SymbolTableEntry entry = new SymbolTableEntry();
+            entry.tokenId = tokenId;
+            entry.lexema = lexema;
+            entry.attributes = new HashMap<String, String>(attributes);
+            return entry;
+        }
     }
 
     public SymbolTable() {
@@ -23,11 +32,14 @@ public class SymbolTable {
         nextPtr = 1;
     }
 
-    public Integer addEntry(String lexema, int tokenId, String description) {
+    public SymbolTableEntry getEntry(Integer ptr) {
+        return symbolTable.get(ptr);
+    }
+
+    public Integer addEntry(String lexema, int tokenId) {
         SymbolTableEntry entry = new SymbolTableEntry();
         entry.tokenId = tokenId;
         entry.lexema = lexema;
-        entry.attributes.put("description", description);
         symbolTable.put(nextPtr, entry);
         return nextPtr++;
     }
@@ -91,9 +103,65 @@ public class SymbolTable {
         return true;
     }
 
+    public Integer getPtr(String lexema, Ambito ambito) {
+        System.out.println("Voy a buscar " + lexema + " en ambito " + ambito.toString());
+        String[] lexemaSplit = lexema.split("\\.");
+        lexema = lexemaSplit[lexemaSplit.length - 1];
+
+        System.out.println("lexema: " + lexema);
+        for (int i = 0; i < lexemaSplit.length; i++)
+            System.out.println(lexemaSplit[i]);
+
+        for (int i = 0; i < lexemaSplit.length-1; i++){
+            Ambito ambitoCopy = ambito.copy();
+            if (i > 0)
+                ambitoCopy.push(lexemaSplit[i-1]);
+
+            System.out.println("Buscando " + lexemaSplit[i] + " en ambito " + ambitoCopy.toString());
+            Integer ptr = getPtr(lexemaSplit[i], ambitoCopy);
+            if (ptr != 0) {
+                String padre = getLexema(Integer.parseInt(getAttribute(ptr, "tipo")));
+                lexemaSplit[i] = padre.split(":")[0];
+                System.out.println("Encontre " + lexemaSplit[i] + " en instancia " + ptr);
+            } else {
+                return null;
+            }
+        }
+
+        while (!ambito.isEmpty()) {
+            if (lexemaSplit.length > 1)
+                ambito.push(lexemaSplit[lexemaSplit.length - 2]);
+
+            Integer ptr = getPtr(lexema + ":" + ambito.toString());
+            if (ptr != 0)
+                return ptr;
+
+            ambito.pop();
+            if (lexemaSplit.length > 1)
+                ambito.pop();
+        }
+        return null;
+    }
+
+    public void delEntry(Integer ptr) {
+        System.out.println("Borrando " + getLexema(ptr));
+        symbolTable.remove(ptr);
+    }
+
+    public Integer upgradeLexema(Integer ptr, String lexema) {
+        SymbolTableEntry entry = getEntry(ptr);
+        if (entry == null)
+            return null;
+        
+        entry = entry.copy();
+        entry.lexema += lexema;
+        symbolTable.put(nextPtr, entry);
+        return nextPtr++;
+    }
+
     public void print() {
         System.out.println("Semantic Table:");
-        System.out.println("Ptr\tLexema\tTokenId\tAttributes");
+        System.out.println("Ptr\tTokenID\tLexema\tAttributes");
         for (HashMap.Entry<Integer, SymbolTableEntry> entry : symbolTable.entrySet()) {
             System.out.print(entry.getKey() + "\t");
             System.out.print(entry.getValue().tokenId + "\t");
@@ -102,5 +170,13 @@ public class SymbolTable {
                 System.out.print(attribute.getKey() + ": " + attribute.getValue() + "\t");
             System.out.println();
         }
+    }
+
+    public static void main(String[] args) {
+        String lexema = "class";
+        String[] lexemaSplit = lexema.split("\\.");
+
+        for (int i = 0; i < lexemaSplit.length; i++)
+            System.out.println(lexemaSplit[i]);
     }
 }
