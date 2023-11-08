@@ -19,9 +19,9 @@ public class FuncionesAuxiliares {
             case "asm4":
                 return new AS1();
             case "asm5":
-                return new AS5(st, 32768, "shortint", 269, erroresLexicos);
+                return new AS5(st, 32768, "shortint", 269, 266, erroresLexicos);
             case "asm6":
-                return new AS5(st, 65535, "uint", 270, erroresLexicos);
+                return new AS5(st, 65535, "uint", 270, 267, erroresLexicos);
             case "asm7":
                 return new AS7(st, erroresLexicos);
             case "asm8":

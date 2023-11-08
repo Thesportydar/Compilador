@@ -6,14 +6,15 @@ public class AS5 implements AccionSemantica {
     private SymbolTable st;
     final int RANGE;
     final String DESC;
-    final int ID_TOKEN;
+    final int ID_TOKEN, USO;
     private List<String> errores;
 
-    public AS5(SymbolTable st, int range, String desc, int id, List<String> errores_lexicos) {
+    public AS5(SymbolTable st, int range, String desc, int id, int id_tipo, List<String> errores_lexicos) {
         this.st = st;
         this.RANGE = range;
         this.DESC = desc;
         this.ID_TOKEN = id;
+        this.USO = id_tipo;
         this.errores = errores_lexicos;
     }
 

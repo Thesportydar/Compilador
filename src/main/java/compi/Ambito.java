@@ -29,6 +29,8 @@ public class Ambito
         for (String a : ambitos) {
             ambito += a + ":";
         }
-        return ambito.substring(0, ambito.length() - 1);
+        if (ambito.contains(":"))
+            return ambito.substring(0, ambito.length() - 1);
+        return ambito;
     }
 }
