@@ -19,6 +19,7 @@ public class AS3 implements AccionSemantica {
             //System.out.println("no existe el id: " + buffer.toString() + " en la tabla de simbolos");
             ptr = st.addEntry(buffer.toString(), TOKEN_ID);
             st.setAttribute(ptr, "uso", "identificador");
+            st.setAttribute(ptr, "valid", "0");
         return ptr;
     }
 

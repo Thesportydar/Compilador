@@ -39,53 +39,77 @@ sen_declarativa      : tipo list_var ','
 tipo                 : SHORT { $$.ival = SHORT; tipo = (int)SHORT; }
                      | UINT  { $$.ival = UINT; tipo = (int)UINT; }
                      | FLOAT { $$.ival = FLOAT; tipo = (int)FLOAT; }
-                     | ID    { $$.ival = st.getPtr(st.getLexema($1.ival), ambitoActual.copy()); st.delEntry($1.ival); tipo = $$.ival; }
+                     | ID    { $$.ival = getTipoClase($1.ival, ambitoActual.copy()); tipo = $$.ival; }
                      ;
 
-CTE                  : CTE_SHORT     {verificarRango($1.ival);}
-                     | CTE_UINT
-                     | CTE_FLOAT     {verificarRango($1.ival);}
+CTE                  : CTE_SHORT     {verificarRango($1.ival); $$.ival = $1.ival; $$.dval = SHORT;}
+                     | CTE_UINT      {$$.ival = $1.ival; $$.dval = UINT;}
+                     | CTE_FLOAT     {verificarRango($1.ival); $$.ival = $1.ival; $$.dval = FLOAT;}
                      | '-' CTE_SHORT {resolverSigno($2.ival); verificarRango($2.ival); $$.ival = $2.ival;}
                      | '-' CTE_FLOAT {resolverSigno($2.ival); verificarRango($2.ival); $$.ival = $2.ival;}
                      | '-' CTE_UINT { agregarError(errores_sintacticos, Parser.ERROR, "No se puede negar un unsigned int");}
                      ;
 
-list_var             : list_var ';' ID { st.setAttribute($3.ival, "tipo", tipo.toString());
-                                         st.setLexema($3.ival, st.getLexema($3.ival) + ":" + ambitoActual.toString()); }
-                                         /*st.upgradeLexema($3.ival, ":"+ambitoActual.toString()); }*/
-                     | ID              { st.setAttribute($1.ival, "tipo", tipo.toString());
-                                         st.setLexema($1.ival, st.getLexema($1.ival) + ":" + ambitoActual.toString()); }
-                                         /*st.upgradeLexema($1.ival, ":"+ambitoActual.toString()); }*/
+list_var             : list_var ';' ID {    if (tipo == 0) {
+                                                agregarError(errores_semanticos, Parser.ERROR,
+                                                        String.format(ERROR_TIPO, st.getLexema($3.ival)));
+                                                break;
+                                            }
+                                            if (!verificarDeclaracion($3.ival)) {
+                                                st.setAttribute($3.ival, "tipo", tipo.toString());
+                                                st.setAttribute($3.ival, "valid", "1");
+                                                st.setLexema($3.ival, st.getLexema($3.ival) + ":" + ambitoActual.toString());
+                                            } else {
+                                                agregarError(errores_semanticos, Parser.ERROR,
+                                                    String.format(ERROR_REDECLARACION, st.getLexema($1.ival), ambitoActual.toString()));
+                                            }
+                                        }
+                     | ID               {   if (tipo == 0) {
+                                                agregarError(errores_semanticos, Parser.ERROR,
+                                                        String.format(ERROR_TIPO, st.getLexema($1.ival)));
+                                                break;
+                                            }
+                                            if (!verificarDeclaracion($1.ival)) {
+                                                st.setAttribute($1.ival, "tipo", tipo.toString());
+                                                st.setAttribute($1.ival, "valid", "1");
+                                                st.setLexema($1.ival, st.getLexema($1.ival) + ":" + ambitoActual.toString());
+                                            } else {
+                                                agregarError(errores_semanticos, Parser.ERROR,
+                                                    String.format(ERROR_REDECLARACION, st.getLexema($1.ival), ambitoActual.toString()));
+                                            }
+                                        }
                      ;
 
-funcion              : header_funcion '{' cuerpo_funcion '}' { ambitoActual.pop(); }
-funcion              : header_funcion cuerpo_funcion '}' {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al comienzo de la función");}
+funcion              : header_funcion '{' cuerpo_funcion sen_retorno '}' { ambitoActual.pop(); }
+                     | header_funcion '{' cuerpo_funcion seleccion_func '}' { ambitoActual.pop(); }
+                     | header_funcion cuerpo_funcion '}' {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al comienzo de la función");}
                      ;
 
-header_funcion       : VOID ID '(' parametro ')' { st.setLexema($2.ival, st.getLexema($2.ival) + ":" + ambitoActual.toString());
-                                                   agregarFuncion($2.ival, VOID, $4.ival);
-                                                   st.setLexema($4.ival, st.getLexema($4.ival) + ":" + ambitoActual.toString()); }
-                                                   /*Integer ptr = st.upgradeLexema($2.ival, ":"+ambitoActual.toString());*/
-                                                   /*agregarFuncion(ptr, VOID, $4.ival);*/
-                                                   /*st.upgradeLexema($4.ival, ":"+ambitoActual.toString()); }*/
-                     | VOID ID '(' ')'           { st.setLexema($2.ival, st.getLexema($2.ival) + ":" + ambitoActual.toString());
-                                                   agregarFuncion($2.ival, VOID, -1); }
-                                                   /*Integer ptr = st.upgradeLexema($2.ival, ":"+ambitoActual.toString());*/
-                                                   /*agregarFuncion(ptr, VOID, -1); }*/
+header_funcion       : VOID ID '(' parametro ')' { agregarFuncion($2.ival, VOID, $4.ival);
+                                                    if ($4.ival != 0)
+                                                        st.setLexema($4.ival, st.getLexema($4.ival) + ":" + ambitoActual.toString());
+                                                 }
+                     | VOID ID '(' ')'           { agregarFuncion($2.ival, VOID, null); }
                      ;
 
-parametro            : tipo ID              {agregarParametro($2.ival, $1.ival); $$.ival = $2.ival; }
+parametro            : tipo ID              {   if (tipo == 0) {
+                                                    agregarError(errores_semanticos, Parser.ERROR,
+                                                            String.format(ERROR_TIPO, st.getLexema($2.ival)));
+                                                    $$.ival = 0;
+                                                    break;
+                                                }
+                                                st.setAttribute($2.ival, "tipo", ""+$1.ival);
+                                                $$.ival = $2.ival;
+                                            }
                      ;
 
-cuerpo_funcion       : cuerpo_funcion sen_declarativa sen_retorno ','
-                     | cuerpo_funcion sen_ejecutable sen_retorno ','
-                     | cuerpo_funcion seleccion_func
-                     | sen_declarativa sen_retorno ','
-                     | sen_ejecutable sen_retorno ','
-                     | seleccion_func
+cuerpo_funcion       : cuerpo_funcion sen_declarativa
+                     | cuerpo_funcion sen_ejecutable
+                     | sen_declarativa
+                     | sen_ejecutable
                      ;
 
-sen_retorno          : RETURN
+sen_retorno          : RETURN ','
                      ;
 
                      // deberian ir sentencias declarativas
@@ -96,16 +120,8 @@ sen_ejecutable       : asignacion ','
                      | inv_metodo ','
                      ;
 
-asignacion           : ID '=' exp_aritmetica                { Integer ptr = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
-                                                              st.delEntry($1.ival);
-                                                             agregarEstructura("Asignacion al identificador ", ptr);
-                                                             $$.ival = crearTerceto("=", ptr, $3.ival, "st", $3.sval);
-                                                             $$.sval = "terceto";}
-                     | atributo_clase '=' exp_aritmetica    { Integer ptr = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
-                                                              st.delEntry($1.ival);
-                                                              agregarEstructura("Asignacion al identificador ", ptr);
-                                                              $$.ival = crearTerceto("=", ptr, $3.ival, "st", $3.sval);
-                                                              $$.sval = "terceto";}
+asignacion           : ID '=' exp_aritmetica                { $$.ival = crearTercetoAsignacion($1.ival, $3); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
+                     | atributo_clase '=' exp_aritmetica    { $$.ival = crearTercetoAsignacion($1.ival, $3); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
                      | ID '='                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una expresión aritmética");}
                      | '=' exp_aritmetica               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un identificador");}
                      /*| ID exp_aritmetica                {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un signo igual");}*/
@@ -113,28 +129,22 @@ asignacion           : ID '=' exp_aritmetica                { Integer ptr = st.g
                      | atributo_clase exp_aritmetica    {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un signo igual");}
                      ;
 
-inv_funcion          : ID '(' exp_aritmetica ')'        { Integer ptr = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
-                                                          st.delEntry($1.ival);
-                                                          agregarEstructuraLlamados("Invocacion a la funcion ", ptr);}
-                     | ID '(' ')'                       { Integer ptr = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
-                                                          st.delEntry($1.ival);
-                                                          agregarEstructuraLlamados("Invocacion a la funcion ", ptr);}
+inv_funcion          : ID '(' exp_aritmetica ')'        { invocacionFuncion($1.ival, $3); }
+                     | ID '(' ')'                       { invocacionFuncion($1.ival); }
                      | ID '(' exp_aritmetica            {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      /*| ID exp_aritmetica ')'            {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}*/
                      | ID ')'                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | ID '('                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;
 
-inv_metodo           : atributo_clase '(' exp_aritmetica ')' { Integer ptr = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
-                                                               agregarEstructuraLlamados("Invocacion al metodo ", $1.ival);}
-                     | atributo_clase '(' ')'                { Integer ptr = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
-                                                               agregarEstructuraLlamados("Invocacion al metodo ", $1.ival);}
+inv_metodo           : atributo_clase '(' exp_aritmetica ')'{ if ($1.ival != 0) invocacionFuncion($1.ival, $3); }
+                     | atributo_clase '(' ')'               { if ($1.ival != 0) invocacionFuncion($1.ival); }
                      | atributo_clase '('               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | atributo_clase ')'               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;
 
-atributo_clase       : ID '.' ID                        {$$.ival = agregarAtributo($1.ival, $3.ival);}
-                     | atributo_clase '.' ID             {$$.ival = agregarAtributo($1.ival, $3.ival);}
+atributo_clase       : ID '.' ID                        { $$.ival = agregarAtributo($1.ival, $3.ival, ambitoActual.copy()); }
+                     | atributo_clase '.' ID             { $$.ival = agregarAtributo($1.ival, $3.ival, ambitoActual.copy()); }
                      ;
 
 seleccion_func       : IF condicion bloque_ejecutable_func ELSE bloque_ejecutable_func END_IF ',' {agregarEstructura("IF");}
@@ -155,10 +165,19 @@ cuerpo_then          : bloque_sen_ejecutable { crearTerceto("BI", -1, -1, "", ""
 cuerpo_else          : bloque_sen_ejecutable
                      ;
 
-condicion            : '(' exp_logica ')' { $$.ival = crearTerceto("BF", $2.ival, -1, $2.sval, ""); }
+condicion            : '(' exp_logica ')' { $$.ival = crearTerceto("BF", $2.ival, -1, $2.sval, ""); } //verificar null
                      ;
 
-exp_logica           : exp_aritmetica comparador exp_aritmetica { $$.ival = crearTerceto(getCmp($2.ival), $1.ival, $3.ival, $1.sval, $3.sval);                                                                  $$.sval = "terceto"; }
+exp_logica           : exp_aritmetica comparador exp_aritmetica {   if ($1.ival == 0 || $3.ival == 0) break;
+
+                                                                    if ($1.dval != $3.dval) {
+                                                                        agregarError(errores_semanticos, Parser.ERROR,
+                                                                            String.format(ERROR_TIPOS_INCOMPATIBLES, $1.sval, $3.sval));
+                                                                        break;
+                                                                    }
+                                                                    $$.ival = crearTerceto(getCmp($2.ival), $1.ival, $3.ival, $1.sval, $3.sval);
+                                                                    $$.sval = "terceto";
+                                                                }
                      | exp_aritmetica comparador {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una expresión aritmética");}
                      | comparador exp_aritmetica {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una expresión aritmética");}
                      | exp_aritmetica           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un comparador");}
@@ -167,10 +186,8 @@ exp_logica           : exp_aritmetica comparador exp_aritmetica { $$.ival = crea
 
                      //Los operandos de las expresiones aritméticas pueden ser variables, constantes, u otras expresiones aritméticas
                      //No se deben permitir anidamientos de expresiones con paréntesis
-exp_aritmetica       : exp_aritmetica '+' termino       { $$.ival = crearTerceto("+", $1.ival, $3.ival, $1.sval, $3.sval);
-                                                          $$.sval = "terceto"; }
-                     | exp_aritmetica '-' termino       { $$.ival = crearTerceto("-", $1.ival, $3.ival, $1.sval, $3.sval);
-                                                          $$.sval = "terceto"; }
+exp_aritmetica       : exp_aritmetica '+' termino       { $$.ival = crearTercetoExp($1, $3, "+"); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
+                     | exp_aritmetica '-' termino       { $$.ival = crearTercetoExp($1, $3, "-"); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
                      | termino                          { $$ = $1; }
                      | exp_aritmetica '+' '+' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
                      | exp_aritmetica '+' '*' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
@@ -180,8 +197,8 @@ exp_aritmetica       : exp_aritmetica '+' termino       { $$.ival = crearTerceto
                      | exp_aritmetica '-' '/' termino   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
                      ;
 
-termino              : termino '*' factor       { $$.ival = crearTerceto("*", $1.ival, $3.ival, $1.sval, $3.sval); $$.sval = "terceto"; }
-                     | termino '/' factor       { $$.ival = crearTerceto("/", $1.ival, $3.ival, $1.sval, $3.sval); $$.sval = "terceto"; }
+termino              : termino '*' factor       { $$.ival = crearTercetoTermino($1, $3, "*"); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; };
+                     | termino '/' factor       { $$.ival = crearTercetoTermino($1, $3, "/"); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; };
                      | factor                   { $$ = $1; }
                      | termino '*' '*' factor   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
                      | termino '*' '/' factor   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
@@ -189,16 +206,24 @@ termino              : termino '*' factor       { $$.ival = crearTerceto("*", $1
                      | termino '/' '/' factor   {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
                      ;
 
-factor               : ID                       { $$.ival = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
-                                                  $$.sval = "st";
-                                                  st.delEntry($1.ival); }
-                     | ID INCREMENT             { $$.ival = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
-                                                  $$.sval = "st";
-                                                  st.delEntry($1.ival); }
-                     | CTE                      { $$.ival = $1.ival; $$.sval = "st"; }
-                     | atributo_clase           { $$.ival = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
-                                                  $$.sval = "st";
-                                                  st.delEntry($1.ival); }
+
+factor               : ID                       {   $$.ival = st.getPtr(st.getLexema($1.ival), ambitoActual.copy(), "identificador");
+                                                    if ($$.ival == 0) {
+                                                        agregarError(errores_semanticos, Parser.ERROR,
+                                                            String.format(ERROR_ALCANCE, st.getLexema($1.ival), ambitoActual.toString()));
+                                                        break;
+                                                    }
+                                                    $$.sval = "st";
+                                                    $$.dval = Integer.parseInt(st.getAttribute($$.ival, "tipo")); //chequear
+                                                }
+                     | ID INCREMENT             { $$ = crearTercetoIncrement($1.ival); }
+                     | CTE                      { $$.ival = $1.ival; $$.sval = "st"; $$.dval = $1.dval; }
+                     | atributo_clase           {   $$.ival = st.getPtr(st.getLexema($1.ival), ambitoActual.copy());
+                                                    if ($$.ival != 0) {
+                                                        $$.sval = "st";
+                                                        $$.dval = Integer.parseInt(st.getAttribute($$.ival, "tipo"));
+                                                    }
+                                                }
                      ;
 
 comparador           : NOT_EQUAL     { $$.ival = NOT_EQUAL; }
@@ -217,8 +242,8 @@ bloque_sen_ejecutable: sen_ejecutable
                      | '{' '}'                   {agregarError(errores_sintacticos, Parser.ERROR, "Se espera un bloque de sentencias ejecutables");}
                      ;
 
-bloque_ejecutable_func: sen_retorno ','
-                      | '{' sen_ejecutable_r sen_retorno ',' '}'
+bloque_ejecutable_func: sen_retorno
+                      | '{' sen_ejecutable_r sen_retorno '}'
                       | ',' 
                       ;
 
@@ -241,31 +266,46 @@ sen_control          : inicio_while condicion DO bloque_sen_ejecutable ',' { agr
 inicio_while         : WHILE { inicio_while = pilaTercetos.getContador()+1; }
                      ;
 
-clase                : class_header '{' '}'                   { ambitoActual.pop(); }
-                     | class_header '{' cuerpo_clase '}'      { ambitoActual.pop(); }
-                     | class_header ','                       { agregarClase($2.ival, "FDCLASS"); ambitoActual.pop(); }
+clase                : class_header '{' '}'                   { ambitoActual.pop(); claseActual = null; }
+                     | class_header '{' cuerpo_clase '}'      { ambitoActual.pop(); claseActual = null; }
+                     | class_header '{' herencia_clase '}'      { ambitoActual.pop(); claseActual = null; }
+                     | CLASS ID ','                       { agregarClase($2.ival, "FDCLASS"); ambitoActual.pop(); claseActual = null; }
                      | class_header cuerpo_clase '}'       { agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final de la clase");
                                                              ambitoActual.pop(); }
                      ;
 
-class_header         : CLASS ID { st.setLexema($2.ival, st.getLexema($2.ival) + ":" + ambitoActual.toString());
-                                  agregarClase($2.ival, "CLASS"); }
-                                  /*Integer ptr = st.upgradeLexema($2.ival, ":"+ambitoActual.toString());*/
-                                  /*agregarClase(ptr, "CLASS"); }*/
+class_header         : CLASS ID             { agregarClase($2.ival, "CLASS"); }
                      ;
 
 cuerpo_clase         : cuerpo_clase sen_declarativa
-                     | sen_declarativa // deberia llevar ',' para funciones
+                     | cuerpo_clase herencia_clase
+                     | sen_declarativa
+                     ;
+
+// herencia por composicion
+herencia_clase       : ID ',' { heredar($1.ival); }
                      ;
 
 %%
-
 public static final String ERROR = "Error";
 public static final List<String> errores_lexicos = new ArrayList<>();
 public static final List<String> errores_sintacticos = new ArrayList<>();
+public static final List<String> errores_semanticos = new ArrayList<>();
 public static final List<String> estructuras = new ArrayList<>();
 public static final float FLOAT_MIN = 1.17549435E-38f;
 private Stack<Integer> pilaLineas = new Stack<>();
+
+private static String ERROR_ALCANCE = "El identificador %s no esta al alcance del ambito %s";
+private static String ERROR_ATRIBUTO = "El identificador %s no tiene un atributo %s";
+private static String ERROR_ST = "El identificador %s no se encuentra en la tabla de simbolos";
+private static String ERROR_CLASE_NO_DECLARADA = "El tipo del identificador %s no esta declarado (ptr:%d)";
+private static String ERROR_CLASE = "El identificador %s no es una clase";
+private static String ERROR_FUNCION = "El identificador %s no es una funcion";
+private static String ERROR_TIPO = "No se puede declarar la variable %s porque el tipo no esta declarado";
+private static String ERROR_REDECLARACION = "Redeclaracion del identificador %s en el ambito %s";
+private static String ERROR_TIPOS_INCOMPATIBLES = "Los tipos %s y %s no son compatibles";
+private static String ERROR_PARAMETRO = "La funcion %s esperaba un parametro de tipo %s";
+private static String ERROR_HERENCIA = "La clase %s ya hereda de la clase %s";
 
 private static boolean errores_compilacion;
 
@@ -333,17 +373,142 @@ public void agregarEstructura(String s, Integer ptr) {
     estructuras.add("Linea(" + getLinea().toString() + "): " + s + st.getLexema(ptr));
 }
 
-public void agregarClase(Integer id, String description) {
-    st.setAttribute(id, "uso", description);
-    ambitoActual.push(st.getLexema(id).split(":")[0]);
-    agregarEstructura(description +" : " + st.getLexema(id));
+public void heredar(Integer padre) {
+    Integer ptr = st.getPtr(st.getLexema(padre), ambitoActual.copy(), "CLASS");
+    if (ptr == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+            String.format(ERROR_ALCANCE, st.getLexema(padre), ambitoActual.toString()));
+        return;
+    }
+    String tipo = st.getAttribute(claseActual, "tipo");
+    if (tipo != null){
+        agregarError(errores_semanticos, Parser.ERROR,
+            String.format(ERROR_HERENCIA, st.getLexema(claseActual), st.getLexema(Integer.parseInt(tipo))));
+        return;
+    }
+    st.setAttribute(claseActual, "tipo", ""+ptr);
 }
 
-public Integer agregarAtributo(Integer ptr_lhs, Integer ptr_rhs) {
-    String lexema = st.getLexema(ptr_lhs) + "." + st.getLexema(ptr_rhs);
-    Integer ptr = st.addEntry(lexema, ID);
-    st.setAttribute(ptr, "uso", "atributo_clase");
+public void agregarClase(Integer id, String desc) {
+    int i = 0;
+    Integer ptr;
+    do {
+        ptr = st.getPtr(st.getLexema(id) + ":" + ambitoActual.toString(), "CLASS");
+        if (ptr != 0)
+            //split by @ and add 1 to the number
+            st.setLexema(id, st.getLexema(id).split("@")[0] + "@" + i++);
+    } while (ptr != 0);
+
+    if (i != 0)
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_REDECLARACION, st.getLexema(id).split("@")[0], ambitoActual.toString()));
+
+    // add the scope to the lexema
+    st.setLexema(id, st.getLexema(id) + ":" + ambitoActual.toString());
+    st.setAttribute(id, "uso", desc);
+    st.setAttribute(id, "valid", "1");
+    ambitoActual.push(st.getLexema(id).split(":")[0]);
+    claseActual = id;
+    agregarEstructura(desc +" : " + st.getLexema(id));
+
+    // si implementa una FDCLASS, borramos esta entrada
+    if (desc.equals("CLASS")) {
+        ptr = st.getPtr(st.getLexema(id), "FDCLASS");
+        if (ptr != 0) {
+            agregarEstructura("Implementacion de FDCLASS: " + st.getLexema(id));
+            st.delEntry(ptr);
+        }
+    }
+}
+
+public boolean verificarDeclaracion(Integer id) {
+    Integer ptr = st.getPtr(st.getLexema(id) +":" + ambitoActual.toString());
+    return ptr != 0;
+}
+
+public Integer getTipoClase(Integer id, Ambito ambito) {
+    //id ptr a class1
+    String lexema = st.getLexema(id); // class1
+    // ver si esta al alcance
+    Integer ptr = st.getPtr(lexema, ambito.copy(), "CLASS");
+    if (ptr == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ALCANCE, lexema, ambito.toString()));
+        return 0;
+    }
+    // ver si es tiene uso = CLASS
+    String uso = st.getAttribute(ptr, "uso");
+    if (uso == null) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ATRIBUTO, lexema, "uso"));
+        return 0;
+    } else if (!uso.equals("CLASS")) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_CLASE, lexema));
+        return 0;
+    }
     return ptr;
+}
+
+public Integer agregarAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) {
+    // ptr_lhs puede ser un id o un atributo_clase, eg: c1:global:main, c1, var1
+    // ptr_rhs es el lexema de un id detectado por lex, eg:var1, obj2
+    int max_nivel = 3;
+    Integer ptr_rhs_aux = 0;
+    do {
+        ptr_lhs = getClase(ptr_lhs, ambito);
+        if (ptr_lhs == 0) return 0;
+        // obtenemos el lexema de la clase, el cual es class1:global:main
+        String clase = st.getLexema(ptr_lhs);
+        String[] partes = clase.split(":");
+        // creamos un ambito partes[1:] + partes[0]
+        ambito = new Ambito();
+        for (int i = 1; i < partes.length; i++)
+            ambito.push(partes[i]);
+        ambito.push(partes[0]);
+        // el resultado es global:main:class1
+        // a partir de este ambito hay que buscar ptr_rhs
+        ptr_rhs_aux = st.getPtr(st.getLexema(ptr_rhs), ambito.copy());
+        // si no lo encuentra, mira si hereda y busca en la clase padre
+    } while (ptr_rhs_aux == 0 && --max_nivel > 0 && st.getAttribute(ptr_lhs, "tipo") != null);
+
+    if (ptr_rhs_aux == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ALCANCE, st.getLexema(ptr_rhs), ambito.toString()));
+        return 0;
+    }
+    return ptr_rhs_aux;
+}
+
+private Integer getClase(Integer id, Ambito ambito) {
+    // id puede ser un id o un atributo_clase, eg: c1:global:main, c1, var1
+    // primero hay que detectar que ptr_lhs este al alcance
+    id = st.getPtr(st.getLexema(id), ambito.copy());
+    if (id == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ALCANCE, st.getLexema(id), ambito.toString()));
+        return 0;
+    }
+    // verificamos si id es de tipo de alguna clase
+    String tipo = st.getAttribute(id, "tipo");
+    if (tipo == null) { //TODO:borrar
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ATRIBUTO, st.getLexema(id), "tipo"));
+        return 0;
+    // para las instancias, tipo es un puntero a una entrada de la tabla de simbolos
+    }
+    if (!st.contains(Integer.parseInt(tipo))) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_CLASE_NO_DECLARADA, st.getLexema(id), Integer.parseInt(tipo)));
+        return 0;
+    }
+    // esta entrada tiene como atributo uso = CLASS
+    if (!st.getAttribute(Integer.parseInt(tipo), "uso").equals("CLASS")) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_CLASE, st.getLexema(Integer.parseInt(tipo))));
+        return 0;
+    }
+    return Integer.parseInt(tipo);
 }
 
 public void resolverSigno(Integer ptr_cte) {
@@ -387,26 +552,168 @@ public void verificarRango(Integer ptr_cte) {
     }
 }
 
-public void agregarFuncion(Integer id, Short tipo, Integer parametro) {
-    st.setAttribute(id, "uso", "FUNCTION");
-    st.setAttribute(id, "tipo", ""+tipo);
-    if (parametro != -1) {
-      st.setAttribute(id, "parameter", parametro.toString());
+public void invocacionFuncion(Integer id, ParserVal param) {
+    //if (id == 0) {
+        //agregarError(errores_semanticos, Parser.ERROR,
+                //String.format(ERROR_ST, st.getLexema(id)));
+        //return;
+    //}
+    Integer ptr;
+    if (!st.getLexema(id).contains(":")) // inv a funcion
+        ptr = st.getPtr(st.getLexema(id), ambitoActual.copy(), "FUNCTION");
+    else if (st.getAttribute(id, "uso").equals("FUNCTION")) // inv a metodo
+        ptr = id;
+    else // intento de inv a algo que no es una funcion o metodo
+        return;
+
+    if (ptr == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ALCANCE, st.getLexema(id), ambitoActual.toString()));
+        return;
     }
-    
-    ambitoActual.push(st.getLexema(id).split(":")[0]);
-    agregarEstructura("FUNCTION :" + st.getLexema(id));
+    if (param != null && param.ival == 0)
+        return;
+
+    String param_formal = st.getAttribute(ptr, "parameter");
+    if (param_formal != null) {
+        param_formal = st.getAttribute(Integer.parseInt(param_formal), "tipo");
+        if (param == null || Integer.parseInt(param_formal) != (int)param.dval) {
+            agregarError(errores_semanticos, Parser.ERROR,
+                    String.format(ERROR_PARAMETRO, st.getLexema(ptr), param_formal));
+            return;
+        }
+    }
+    else if (param != null) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_PARAMETRO, st.getLexema(ptr), "void"));
+        return;
+    }
+    agregarEstructuraLlamados("Invocacion a la funcion ", ptr);
 }
 
-public void agregarParametro(Integer id, Integer tipo){
-    st.setAttribute(id, "uso", "PARAMETER");
-    st.setAttribute(id, "tipo", tipo.toString());
+public void invocacionFuncion(Integer id) {
+    invocacionFuncion(id, null);
+}
+
+public void agregarFuncion(Integer id, Short tipo, Integer parametro) {
+    int i = 0;
+    Integer ptr;
+    do {
+        ptr = st.getPtr(st.getLexema(id) + ":" + ambitoActual.toString());
+        if (ptr != 0)
+            //split by @ and add 1 to the number
+            st.setLexema(id, st.getLexema(id).split("@")[0] + "@" + i++);
+    } while (ptr != 0);
+
+    if (i != 0)
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_REDECLARACION, st.getLexema(id).split("@")[0], ambitoActual.toString()));
+
+    // add the scope to the lexema
+    st.setLexema(id, st.getLexema(id) + ":" + ambitoActual.toString());
+    st.setAttribute(id, "uso", "FUNCTION");
+    st.setAttribute(id, "tipo", ""+tipo);
+    st.setAttribute(id, "valid", "1");
+    
+    if (parametro != null && parametro != 0) {
+        st.setAttribute(id, "parameter", parametro.toString());
+        st.setAttribute(parametro, "valid", "1");
+    }
+    // agrego el ambito al ambitoActual
+    ambitoActual.push(st.getLexema(id).split(":")[0]);
+    agregarEstructura("FUNCTION :" + st.getLexema(id));
 }
 
 public Integer crearTerceto(String op, Integer lhs, Integer rhs, String tipoLhs, String tipoRhs) {
     Terceto terceto = new Terceto(op, lhs, rhs, tipoLhs == "terceto", tipoRhs == "terceto");
     pilaTercetos.apilar(terceto);
     return pilaTercetos.getContador();
+}
+
+public String getTipo(Integer tipo) {
+    String t = this.lexicalAnalyzer.getReservedWord(tipo);
+    if (t == null)
+        // es un tipo declarado, buscarlo en la st
+        t = st.getLexema(tipo).split(":")[0];
+    return t;
+}
+
+public Integer crearTercetoExp(ParserVal lhs, ParserVal rhs, String op) {
+    if (lhs.ival == 0 || rhs.ival == 0) return 0;
+
+    if (lhs.dval != rhs.dval) {
+        agregarError(errores_semanticos, Parser.ERROR,
+            String.format(ERROR_TIPOS_INCOMPATIBLES, getTipo((int)lhs.dval), getTipo((int)rhs.dval)));
+        return 0;
+    }
+    return crearTerceto(op, lhs.ival, rhs.ival, lhs.sval, rhs.sval);
+}
+
+public Integer crearTercetoTermino(ParserVal lhs, ParserVal rhs, String op) {
+    if (lhs.ival == 0 || rhs.ival == 0) return 0;
+
+    if (lhs.dval == rhs.dval) {
+        agregarError(errores_semanticos, Parser.ERROR,
+            String.format(ERROR_TIPOS_INCOMPATIBLES, getTipo((int)lhs.dval), getTipo((int)rhs.dval)));
+        return 0;
+    }
+    return crearTerceto("*", lhs.ival, rhs.ival, lhs.sval, rhs.sval);
+}
+
+public Integer crearTercetoAsignacion(Integer lhs, ParserVal rhs) {
+    if (lhs == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ST, st.getLexema(lhs)));
+        return 0;
+    }
+    Integer ptr = st.getPtr(st.getLexema(lhs), ambitoActual.copy(), "identificador");
+    if (ptr == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ALCANCE, st.getLexema(lhs), ambitoActual.toString()));
+        return 0;
+    }
+    if (rhs.ival == 0) return 0;
+
+    Integer tipo_lhs = Integer.parseInt(st.getAttribute(ptr, "tipo"));
+    if (tipo_lhs != rhs.dval) { 
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_TIPOS_INCOMPATIBLES, getTipo(tipo_lhs), getTipo((int)rhs.dval)));
+        return 0;
+    }
+    agregarEstructura("Asignacion al identificador ", ptr);
+    return crearTerceto("=", ptr, rhs.ival, "st", rhs.sval);
+}
+
+public ParserVal crearTercetoIncrement(Integer id) {
+    ParserVal val = new ParserVal();
+    if (id == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ST, st.getLexema(id)));
+        return val;
+    }
+    Integer ptr = st.getPtr(st.getLexema(id), ambitoActual.copy(), "identificador");
+    if (ptr == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ALCANCE, st.getLexema(id), ambitoActual.toString()));
+        return val;
+    }
+    Integer tipo = Integer.parseInt(st.getAttribute(ptr, "tipo"));
+    agregarEstructura("Increment al identificador ", ptr);
+
+    ptr =  crearTerceto("=", ptr,
+            crearTerceto("+", ptr, newEntryCte(tipo), "st", "st"),
+            "st", "terceto");
+    val.ival = ptr;
+    val.dval = tipo;
+    val.sval = "terceto";
+    return val;
+}
+
+public Integer newEntryCte(Integer tipo) {
+    if (tipo == FLOAT)
+        return st.addEntry("1.0", UINT);
+    else
+        return st.addEntry("1", tipo);
 }
 
 public String getCmp(Integer cmpID) {
@@ -456,35 +763,10 @@ public void completarWhile() {
     pilaTercetos.apilar(bi);
 }
 
-/*public void completarWhile() {*/
-    /*PilaTercetos aux = new PilaTercetos();*/
-    /*Terceto terceto;*/
-    /*Terceto bi = pilaTercetos.pop();*/
-    /*Integer terceActual = pilaTercetos.getContador();*/
-
-    /*while (pilaTercetos.getContador() > 0) {*/
-        /*terceto = pilaTercetos.pop();*/
-        /*if (terceto.getOperador().equals("BF") && terceto.getOperando2() == -1)*/
-            /*terceto.setOperando2(terceActual, true);*/
-
-        /*else if (terceto.getOperador().equals("WHILE")) {*/
-            /*bi.setOperando1(pilaTercetos.getContador()+1, true);*/
-            /*break;*/
-        /*}*/
-        /*aux.apilar(terceto);*/
-    /*}*/
-
-    /*while (aux.getContador() > 0) {*/
-        /*pilaTercetos.apilar(aux.pop());*/
-    /*}*/
-
-    /*pilaTercetos.apilar(bi);*/
-/*}*/
-
 LexicalAnalyzer lexicalAnalyzer;
 SymbolTable st;
 PilaTercetos pilaTercetos;
-Integer inicio_while, tipo;
+Integer inicio_while, tipo, claseActual;
 Ambito ambitoActual = new Ambito("global");
 
 public static void main(String[] args) {
@@ -499,6 +781,7 @@ public static void main(String[] args) {
     Parser.imprimirErrores(errores_lexicos, "Errores Lexicos");
     Parser.imprimirErrores(errores_sintacticos, "Errores Sintacticos");
     Parser.imprimirErrores(estructuras, "Estructuras Sintacticas");
+    Parser.imprimirErrores(errores_semanticos, "Errores Semanticos");
     
     parser.st.print();
     parser.pilaTercetos.print();

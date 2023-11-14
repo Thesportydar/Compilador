@@ -1,15 +1,28 @@
 {
-    * var1,
-    var2 = -1_ui,
-    SHORT var3,
-    var4 = 1_u,
-    FLOAT var_iable,
-    UINT variable1234567890123,
-    SHORT variable123456789012345,
-    ** esto es un comentario
-       multilinea,
-       no se puede hacer eso,
-    float variable,
-    PRINT #hola mundo#,
-    PRINT #hola mundo
+    SHORT var1,
+    var1 = var1,
+    CLASS class1 {
+        SHORT var1,
+    }
+    class1 c1,
+    c1.var1 = c1.var1,
+    c1.var1 = var1,
+    CLASS class2 {
+        class1 c1,
+        VOID fun1() {
+            c1.var1 = var1,
+            RETURN,
+        }
+        VOID fun2(SHORT par1) {
+            c1.var1 = par1,
+            RETURN,
+        }
+    }
+    class2 c2,
+    c2.fun1(),
+    c2.fun2(c2),
+    VOID fun1(FLOAT par1) {
+        par1 = par1,
+        RETURN,
+    }
 }

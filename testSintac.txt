@@ -1,12 +1,33 @@
 {
-    FLOAT var1; var2,
-    SHORT var3,
-    var1 = var2,
-    var1 = 1.0,
-    var1 = var3,
-    CLASS class1 {
-        SHORT s1,
+    VOID fun1(SHORT var2) {
+        SHORT var1,
+        var2 = var1,
+        RETURN,
     }
-    class1 c1,
-    c1.s1 = var3,
+    VOID fun1(SHORT var2) {
+        SHORT var1,
+        var2 = var1,
+        RETURN,
+    }
+    VOID fun3(SHORT var2) {
+        SHORT var1,
+        var2 = var1,
+        RETURN,
+    }
+    CLASS clase1,
+    CLASS clase1 {
+        SHORT var3,
+        VOID metodo1(SHORT var5){
+            var3= var5,
+            RETURN,
+        }
+        VOID metodo1(SHORT var5){
+            var3= var5,
+            RETURN,
+        }
+    }
+
+    CLASS clase1 {
+        SHORT var7,
+    }
 }

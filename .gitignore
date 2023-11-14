@@ -4,3 +4,6 @@
 ./src/main/java/compi/AccionesSemanticas/test.sh
 ./src/main/java/compi/Parser/y.output
 ./src/main/java/compi/Parser/yacc.irix
+
+# .vs folder
+.vs

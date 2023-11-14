@@ -1,0 +1,10 @@
+{
+    SHORT cls1,
+    VOID fun1() {
+        cls1 = 1_s,
+        RETURN,
+    }
+    VOID fun1(SHORT a) {
+        cls1 = 1_s,
+        RETURN,
+}
