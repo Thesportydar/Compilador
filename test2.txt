@@ -1,11 +1,12 @@
 {
     CLASS class1 {
+        SHORT var1,
         VOID fun1() {
-            SHORT var1,
-            VOID fun1() {
-                SHORT var1,
-            }
+                SHORT var2,
+    SHORT var2,
+            var1 = 1_s,
             RETURN,
         }
     }
+
 }

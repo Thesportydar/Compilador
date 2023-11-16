@@ -25,4 +25,5 @@
         par1 = par1,
         RETURN,
     }
+    c2.c1.var1 = 1_s,
 }

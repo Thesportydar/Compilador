@@ -1,10 +1,19 @@
 {
-    SHORT cls1,
-    VOID fun1() {
-        cls1 = 1_s,
+    CHECK SHORT var1,
+    VOID main(SHORT par1) {
+        var1 = var1,
+        CLASS cls1 {
+            CHECK SHORT bar,
+            VOID main() {
+                var1 = bar,
+                bar = var1++,
+                RETURN,
+            }
+        }
+        cls1 c1,
+        c1.main(),
+        c1.bar = c1++,
         RETURN,
     }
-    VOID fun1(SHORT a) {
-        cls1 = 1_s,
-        RETURN,
+    main(var1),
 }

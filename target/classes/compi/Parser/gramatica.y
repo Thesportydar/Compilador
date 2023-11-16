@@ -10,7 +10,7 @@ import java.util.Stack;
 %}
 
 %token ID IF ELSE END_IF PRINT CLASS VOID WHILE DO SHORT UINT FLOAT
-       CTE_SHORT CTE_UINT CTE_FLOAT INCREMENT GREATER_EQUAL LESS_EQUAL EQUAL NOT_EQUAL STR_1LN RETURN
+       CTE_SHORT CTE_UINT CTE_FLOAT INCREMENT GREATER_EQUAL LESS_EQUAL EQUAL NOT_EQUAL STR_1LN RETURN CHECK
 
 %left '+' '-'
 %left '*' '/'
@@ -32,8 +32,13 @@ sentencias           : sentencias sen_declarativa
                      ;
 
 sen_declarativa      : tipo list_var ','
+                     | sentencia_check tipo list_var ',' { check=false; }
+                     | tipo list_var             {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
                      | funcion
                      | clase
+                     ;
+
+sentencia_check      : CHECK { check=true; }
                      ;
 
 tipo                 : SHORT { $$.ival = SHORT; tipo = (int)SHORT; }
@@ -50,34 +55,8 @@ CTE                  : CTE_SHORT     {verificarRango($1.ival); $$.ival = $1.ival
                      | '-' CTE_UINT { agregarError(errores_sintacticos, Parser.ERROR, "No se puede negar un unsigned int");}
                      ;
 
-list_var             : list_var ';' ID {    if (tipo == 0) {
-                                                agregarError(errores_semanticos, Parser.ERROR,
-                                                        String.format(ERROR_TIPO, st.getLexema($3.ival)));
-                                                break;
-                                            }
-                                            if (!verificarDeclaracion($3.ival)) {
-                                                st.setAttribute($3.ival, "tipo", tipo.toString());
-                                                st.setAttribute($3.ival, "valid", "1");
-                                                st.setLexema($3.ival, st.getLexema($3.ival) + ":" + ambitoActual.toString());
-                                            } else {
-                                                agregarError(errores_semanticos, Parser.ERROR,
-                                                    String.format(ERROR_REDECLARACION, st.getLexema($1.ival), ambitoActual.toString()));
-                                            }
-                                        }
-                     | ID               {   if (tipo == 0) {
-                                                agregarError(errores_semanticos, Parser.ERROR,
-                                                        String.format(ERROR_TIPO, st.getLexema($1.ival)));
-                                                break;
-                                            }
-                                            if (!verificarDeclaracion($1.ival)) {
-                                                st.setAttribute($1.ival, "tipo", tipo.toString());
-                                                st.setAttribute($1.ival, "valid", "1");
-                                                st.setLexema($1.ival, st.getLexema($1.ival) + ":" + ambitoActual.toString());
-                                            } else {
-                                                agregarError(errores_semanticos, Parser.ERROR,
-                                                    String.format(ERROR_REDECLARACION, st.getLexema($1.ival), ambitoActual.toString()));
-                                            }
-                                        }
+list_var             : list_var ';' ID { declararVariable($3.ival); }
+                     | ID               { declararVariable($1.ival); }
                      ;
 
 funcion              : header_funcion '{' cuerpo_funcion sen_retorno '}' { ambitoActual.pop(); }
@@ -213,6 +192,14 @@ factor               : ID                       {   $$.ival = st.getPtr(st.getLe
                                                             String.format(ERROR_ALCANCE, st.getLexema($1.ival), ambitoActual.toString()));
                                                         break;
                                                     }
+                                                    String check_lhs = st.getAttribute($$.ival,"check_lhs");
+                                                    String check_rhs = st.getAttribute($$.ival,"check_rhs");
+                                                    if (check_rhs != null && check_rhs.equals("false")){
+                                                        st.setAttribute($$.ival, "check_rhs", "true");
+                                                        if (check_lhs.equals("true")) {
+                                                          agregarEstructura(String.format(ESTRUCTURA_CHECK,st.getLexema($$.ival)));
+                                                        }
+                                                    }
                                                     $$.sval = "st";
                                                     $$.dval = Integer.parseInt(st.getAttribute($$.ival, "tipo")); //chequear
                                                 }
@@ -222,6 +209,14 @@ factor               : ID                       {   $$.ival = st.getPtr(st.getLe
                                                     if ($$.ival != 0) {
                                                         $$.sval = "st";
                                                         $$.dval = Integer.parseInt(st.getAttribute($$.ival, "tipo"));
+                                                        String check_lhs = st.getAttribute($$.ival,"check_lhs");
+                                                        String check_rhs = st.getAttribute($$.ival,"check_rhs");
+                                                        if (check_rhs != null && check_rhs.equals("false")){
+                                                            st.setAttribute($$.ival, "check_rhs", "true");
+                                                            if (check_lhs.equals("true")) {
+                                                                agregarEstructura(String.format(ESTRUCTURA_CHECK,st.getLexema($$.ival)));
+                                                            }
+                                                        }
                                                     }
                                                 }
                      ;
@@ -306,6 +301,8 @@ private static String ERROR_REDECLARACION = "Redeclaracion del identificador %s 
 private static String ERROR_TIPOS_INCOMPATIBLES = "Los tipos %s y %s no son compatibles";
 private static String ERROR_PARAMETRO = "La funcion %s esperaba un parametro de tipo %s";
 private static String ERROR_HERENCIA = "La clase %s ya hereda de la clase %s";
+private static String ERROR_CONTROL_HERENCIA = "Se excedio el limite de herencia con la clase %s";
+private static String ESTRUCTURA_CHECK = "Identificador %s fue usado en el lado derecho y tambien 2+ veces en el lado izquierdo";
 
 private static boolean errores_compilacion;
 
@@ -373,6 +370,32 @@ public void agregarEstructura(String s, Integer ptr) {
     estructuras.add("Linea(" + getLinea().toString() + "): " + s + st.getLexema(ptr));
 }
 
+public void declararVariable(Integer ptr) {
+    if (tipo == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_TIPO, st.getLexema(ptr)));
+        return;
+    }
+    Integer aux = 0;
+    // las declaraciones dentro de una clase deben tener mas consideraciones
+    if (claseActual != null)
+        aux = obtenerAtributo(claseActual, ptr, null);
+    if (aux == 0)
+        aux = st.getPtr(st.getLexema(ptr) + ":" + ambitoActual.toString());
+
+    if (aux != 0) {
+        agregarError(errores_semanticos, Parser.ERROR, String.format(ERROR_REDECLARACION, st.getLexema(ptr), ambitoActual.toString()));
+        return;
+    }
+    st.setAttribute(ptr, "tipo", tipo.toString());
+    st.setAttribute(ptr, "valid", "1");
+    st.setLexema(ptr, st.getLexema(ptr) + ":" + ambitoActual.toString());
+    if (check) {
+        st.setAttribute(ptr, "check_lhs", "false");
+        st.setAttribute(ptr, "check_rhs", "false");
+    }
+}
+
 public void heredar(Integer padre) {
     Integer ptr = st.getPtr(st.getLexema(padre), ambitoActual.copy(), "CLASS");
     if (ptr == 0) {
@@ -387,6 +410,13 @@ public void heredar(Integer padre) {
         return;
     }
     st.setAttribute(claseActual, "tipo", ""+ptr);
+
+    if (st.getAttribute(ptr, "tipo") != null) {
+        ptr = Integer.parseInt(st.getAttribute(ptr, "tipo"));
+        if (st.getAttribute(ptr, "tipo") != null)
+            agregarError(errores_semanticos, Parser.ERROR,
+                    String.format(ERROR_CONTROL_HERENCIA, st.getLexema(ptr)));
+    }
 }
 
 public void agregarClase(Integer id, String desc) {
@@ -421,11 +451,6 @@ public void agregarClase(Integer id, String desc) {
     }
 }
 
-public boolean verificarDeclaracion(Integer id) {
-    Integer ptr = st.getPtr(st.getLexema(id) +":" + ambitoActual.toString());
-    return ptr != 0;
-}
-
 public Integer getTipoClase(Integer id, Ambito ambito) {
     //id ptr a class1
     String lexema = st.getLexema(id); // class1
@@ -451,12 +476,25 @@ public Integer getTipoClase(Integer id, Ambito ambito) {
 }
 
 public Integer agregarAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) {
+    ptr_lhs = obtenerAtributo(ptr_lhs, ptr_rhs, ambito);
+    if (ptr_lhs == 0) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ALCANCE, st.getLexema(ptr_rhs), ambito.toString()));
+        return 0;
+    }
+    return ptr_lhs;
+}
+
+public Integer obtenerAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) {
     // ptr_lhs puede ser un id o un atributo_clase, eg: c1:global:main, c1, var1
     // ptr_rhs es el lexema de un id detectado por lex, eg:var1, obj2
     int max_nivel = 3;
     Integer ptr_rhs_aux = 0;
     do {
-        ptr_lhs = getClase(ptr_lhs, ambito);
+        // si ptr_lhs es la clase no hace falta buscarla, si es una instancia de ella si
+        if (ambito != null)
+            ptr_lhs = getClase(ptr_lhs, ambito);
+        
         if (ptr_lhs == 0) return 0;
         // obtenemos el lexema de la clase, el cual es class1:global:main
         String clase = st.getLexema(ptr_lhs);
@@ -468,15 +506,10 @@ public Integer agregarAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) 
         ambito.push(partes[0]);
         // el resultado es global:main:class1
         // a partir de este ambito hay que buscar ptr_rhs
-        ptr_rhs_aux = st.getPtr(st.getLexema(ptr_rhs), ambito.copy());
+        ptr_rhs_aux = st.getPtr(st.getLexema(ptr_rhs) + ":" + ambito.toString());
         // si no lo encuentra, mira si hereda y busca en la clase padre
     } while (ptr_rhs_aux == 0 && --max_nivel > 0 && st.getAttribute(ptr_lhs, "tipo") != null);
 
-    if (ptr_rhs_aux == 0) {
-        agregarError(errores_semanticos, Parser.ERROR,
-                String.format(ERROR_ALCANCE, st.getLexema(ptr_rhs), ambito.toString()));
-        return 0;
-    }
     return ptr_rhs_aux;
 }
 
@@ -680,13 +713,28 @@ public Integer crearTercetoAsignacion(Integer lhs, ParserVal rhs) {
                 String.format(ERROR_TIPOS_INCOMPATIBLES, getTipo(tipo_lhs), getTipo((int)rhs.dval)));
         return 0;
     }
+
+    //CHEQUEO de clausula CHECK
+    String check_lhs = st.getAttribute(ptr, "check_lhs");
+    String check_rhs = st.getAttribute(ptr, "check_rhs");
+    
+    if (check_lhs != null && !check_lhs.equals("true")) { // si es true o ya se imprimio o falta cambiar rhs
+        if (!check_lhs.equals("false")) {
+            if (!check_lhs.equals(ambitoActual.toString())) { // tiene que aparecer en ambitos distintos
+                st.setAttribute(ptr, "check_lhs", "true"); // de ahora en mas ya se que aparecio en 2+ ambitos
+                if (check_rhs.equals("true")) // ya fue usada tmb del rhs
+                    agregarEstructura(String.format(ESTRUCTURA_CHECK, st.getLexema(ptr)));
+            }
+        } else // si es false(primer uso del lhs) le seteo ambito actual
+            st.setAttribute(ptr, "check_lhs", ambitoActual.toString());
+    }
     agregarEstructura("Asignacion al identificador ", ptr);
     return crearTerceto("=", ptr, rhs.ival, "st", rhs.sval);
-}
+} 
 
 public ParserVal crearTercetoIncrement(Integer id) {
     ParserVal val = new ParserVal();
-    if (id == 0) {
+    if (id == 0) {// TODO:esto mmm...
         agregarError(errores_semanticos, Parser.ERROR,
                 String.format(ERROR_ST, st.getLexema(id)));
         return val;
@@ -698,8 +746,21 @@ public ParserVal crearTercetoIncrement(Integer id) {
         return val;
     }
     Integer tipo = Integer.parseInt(st.getAttribute(ptr, "tipo"));
-    agregarEstructura("Increment al identificador ", ptr);
+    if (lexicalAnalyzer.getReservedWord(tipo) == null) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_TIPOS_INCOMPATIBLES, getTipo(tipo), "int(1)"));
+        return val;
+    }
+    //CHEQUEO de clausula CHECK
+    String check_lhs = st.getAttribute(id,"check_lhs");
+    String check_rhs = st.getAttribute(id,"check_rhs");
+    if (check_lhs != null && check_rhs.equals("false")){
+      st.setAttribute(id, "check_rhs", "true");
+      if (check_lhs.equals("true"))
+        agregarEstructura(String.format(ESTRUCTURA_CHECK,st.getLexema(id)));
+    }
 
+    agregarEstructura("Increment al identificador ", ptr);
     ptr =  crearTerceto("=", ptr,
             crearTerceto("+", ptr, newEntryCte(tipo), "st", "st"),
             "st", "terceto");
@@ -768,6 +829,7 @@ SymbolTable st;
 PilaTercetos pilaTercetos;
 Integer inicio_while, tipo, claseActual;
 Ambito ambitoActual = new Ambito("global");
+boolean check;
 
 public static void main(String[] args) {
     TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 28);

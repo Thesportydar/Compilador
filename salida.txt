@@ -1,37 +1,35 @@
+clase 5
+clase 5
+clase 5
 
 Estructuras Sintacticas:
-Linea(5): Asignacion al identificador var1:global
-Linea(7): CLASS : class1:global
-Linea(15): Asignacion al identificador var1:global:class1
-Linea(17): Asignacion al identificador var1:global:class1
-Linea(19): CLASS : class2:global
-Linea(23): FUNCTION :fun1:global:class2
-Linea(25): Asignacion al identificador var1:global:class1
-Linea(31): FUNCTION :fun2:global:class2
-Linea(33): Asignacion al identificador var1:global:class1
-Linea(43): Invocacion al metodo fun1:global:class2
-Linea(45): Invocacion al metodo fun2:global:class2
-Linea(47): FUNCTION :fun1:global
-Linea(49): Asignacion al identificador par1:global:fun1
+Linea(3): FUNCTION :main:global
+Linea(4): Asignacion al identificador var1:global
+Linea(5): CLASS : cls1:global:main
+Linea(7): FUNCTION :main:global:main:cls1
+Linea(8): Identificador var1:global fue usado en el lado derecho y tambien 2+ veces en el lado izquierdo
+Linea(-1): Asignacion al identificador var1:global
+Linea(9): Increment al identificador var1:global
+Linea(-1): Asignacion al identificador bar:global:main:cls1
+Linea(14): Invocacion a la funcion main:global:main:cls1
+Linea(18): Invocacion a la funcion main:global
+
+Errores Semanticos:
+Error (Linea 15): Los tipos cls1 y int(1) no son compatibles
 Semantic Table:
 Ptr	TokenID	Lexema	Attributes
-1	257	var1:global	uso: identificador	valid: 1	tipo: 266	
-2	257	var1:global:class1	uso: atributo_clase	valid: 1	tipo: 266	
-3	257	class1:global	uso: CLASS	valid: 1	
-5	257	c1:global	uso: identificador	valid: 1	tipo: 3	
-6	257	c1:global:class2	uso: identificador	valid: 1	tipo: 3	
-8	257	class2:global	uso: CLASS	valid: 1	
-9	257	fun1:global:class2	uso: atributo_clase	valid: 1	tipo: 263	
-11	257	fun2:global:class2	uso: atributo_clase	valid: 1	tipo: 263	parameter: 12	
-12	257	par1:global:class2:fun2	uso: PARAMETER	valid: 1	tipo: 266	
-13	257	par1:global:fun1	uso: PARAMETER	valid: 1	tipo: 268	
-15	257	c2:global	uso: identificador	valid: 1	tipo: 8	
-17	257	fun1:global	uso: FUNCTION	valid: 1	tipo: 263	parameter: 13	
+1	257	var1:global	uso: identificador	valid: 1	check_rhs: true	tipo: 266	check_lhs: true	
+2	257	main:global	uso: FUNCTION	valid: 1	tipo: 263	parameter: 3	
+3	257	par1:global:main	uso: identificador	valid: 1	tipo: 266	
+5	257	cls1:global:main	uso: CLASS	valid: 1	
+6	257	bar:global:main:cls1	uso: identificador	valid: 1	check_rhs: true	tipo: 266	check_lhs: global:main:cls1:main	
+7	257	main:global:main:cls1	uso: FUNCTION	valid: 1	tipo: 263	
+9	266	1	
+11	257	c1:global:main	uso: identificador	valid: 1	tipo: 5	
 Pila de Tercetos:
 (=, 1, 1)
-(=, 2, 2)
-(=, 2, 1)
-(=, 2, 1)
-(=, 2, 12)
-(=, 13, 13)
+(=, 1, 6)
+(+, 1, 9)
+(=, 1, [3])
+(=, 6, [4])
 Ambito actual: global
