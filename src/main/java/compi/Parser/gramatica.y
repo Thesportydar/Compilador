@@ -1,6 +1,7 @@
 %{
 package compi.Parser;
 import compi.AccionesSemanticas.AccionSemantica;
+import compi.AssemblyGenerator.AssemblyGenerator;
 import compi.*;
 
 import java.io.*;
@@ -132,13 +133,16 @@ seleccion_func       : IF condicion bloque_ejecutable_func ELSE bloque_ejecutabl
                      | IF condicion bloque_ejecutable_func ELSE END_IF {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
                      ;
 
-seleccion            : IF condicion cuerpo_then END_IF { agregarEstructura("IF"); 
-                                                         completarB("BI", pilaTercetos.getContador()+1); }
+seleccion            : IF condicion cuerpo_then END_IF { agregarEstructura("IF");
+                                                         completarB("BI", pilaTercetos.getContador()); }
                      | IF condicion cuerpo_then ELSE cuerpo_else END_IF { agregarEstructura("IF"); 
-                                                                          completarB("BI", pilaTercetos.getContador()+1); }
+                                                                          completarB("BI", pilaTercetos.getContador()+1);
+                                                                          crearTerceto("END_IF"+countIF++, -1, -1, "", ""); }
                      ;
 
-cuerpo_then          : bloque_sen_ejecutable { crearTerceto("BI", -1, -1, "", ""); completarB("BF", pilaTercetos.getContador()+1);  }
+cuerpo_then          : bloque_sen_ejecutable { crearTerceto("BI", -1, -1, "", "");
+                                               completarB("BF", pilaTercetos.getContador()+1);
+                                               crearTerceto("END_IF"+countIF++, -1, -1, "", ""); }
                      ;
 
 cuerpo_else          : bloque_sen_ejecutable
@@ -685,12 +689,12 @@ public Integer crearTercetoExp(ParserVal lhs, ParserVal rhs, String op) {
 public Integer crearTercetoTermino(ParserVal lhs, ParserVal rhs, String op) {
     if (lhs.ival == 0 || rhs.ival == 0) return 0;
 
-    if (lhs.dval == rhs.dval) {
+    if (lhs.dval != rhs.dval) {
         agregarError(errores_semanticos, Parser.ERROR,
             String.format(ERROR_TIPOS_INCOMPATIBLES, getTipo((int)lhs.dval), getTipo((int)rhs.dval)));
         return 0;
     }
-    return crearTerceto("*", lhs.ival, rhs.ival, lhs.sval, rhs.sval);
+    return crearTerceto(op, lhs.ival, rhs.ival, lhs.sval, rhs.sval);
 }
 
 public Integer crearTercetoAsignacion(Integer lhs, ParserVal rhs) {
@@ -828,6 +832,7 @@ LexicalAnalyzer lexicalAnalyzer;
 SymbolTable st;
 PilaTercetos pilaTercetos;
 Integer inicio_while, tipo, claseActual;
+int countIF = 0;
 Ambito ambitoActual = new Ambito("global");
 boolean check;
 
@@ -837,7 +842,7 @@ public static void main(String[] args) {
     SymbolTable sttemp = new SymbolTable();
 
     FuncionesAuxiliares.loadMatrixs(mI, mA, "test.csv", sttemp, errores_lexicos);
-    Parser parser = new Parser(new LexicalAnalyzer(args[0], mI, mA, errores_lexicos), sttemp);
+    Parser parser = new Parser(new LexicalAnalyzer("test2.txt", mI, mA, errores_lexicos), sttemp);
     parser.run();
     
     Parser.imprimirErrores(errores_lexicos, "Errores Lexicos");
@@ -847,6 +852,18 @@ public static void main(String[] args) {
     
     parser.st.print();
     parser.pilaTercetos.print();
+
+    if (errores_lexicos.isEmpty() && errores_sintacticos.isEmpty() && errores_semanticos.isEmpty()) {
+        AssemblyGenerator asm = new AssemblyGenerator(parser.pilaTercetos, parser.st, "output.asm");
+        try {
+            asm.generarCabecera();
+            asm.generarAssembler();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    
     System.out.println("Ambito actual: " + parser.ambitoActual.toString());
 }
 

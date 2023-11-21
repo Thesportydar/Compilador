@@ -1,12 +1,21 @@
 {
-    CLASS class1 {
-        SHORT var1,
-        VOID fun1() {
-                SHORT var2,
-    SHORT var2,
-            var1 = 1_s,
-            RETURN,
-        }
-    }
+    SHORT var1;var2,
+    **var1 = var1 * 2_s + var2 / 3_s,
 
+    IF (var1 == var2) {
+        var1 = 1_s,
+        var1 = 1_s,
+        var1 = 1_s,
+        IF (var1 == 1_s)
+            var1 = 3_s,
+        END_IF,
+        var1 = 2_s,
+        var2 = 3_s,
+    }
+    ELSE {
+        var1 = 2_s,
+        var1 = 2_s,
+        var1 = 2_s,
+    }
+    END_IF,
 }

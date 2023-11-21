@@ -1,28 +1,29 @@
 package compi;
 
+import java.util.Iterator;
 import java.util.Stack;
 
-public class PilaTercetos {
-    private Stack<Terceto> pila;
+public class PilaTercetos extends Stack<Terceto> {
     private Integer contador;
 
     public PilaTercetos() {
-        pila = new Stack<Terceto>();
+        super();
         contador = 0;
     }
 
     public void apilar(Terceto t) {
-        pila.push(t);
+        this.add(t);
         contador++;
     }
 
     public Terceto tope() {
-        return pila.peek();
+        return this.peek();
     }
 
+    @Override
     public Terceto pop() {
         contador--;
-        return pila.pop();
+        return super.pop();
     }
 
     public Integer getContador() {
@@ -31,8 +32,13 @@ public class PilaTercetos {
 
     public void print() {
         System.out.println("Pila de Tercetos:");
-        for (Terceto t : pila) {
-            System.out.println(t);
+        Iterator<Terceto> it = this.iterator();
+        while (it.hasNext()) {
+            System.out.println(it.next().toString());
         }
+    }
+
+    public boolean isEmpty() {
+        return this.empty();
     }
 }

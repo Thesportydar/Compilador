@@ -20,7 +20,7 @@
     }
     class2 c2,
     c2.fun1(),
-    c2.fun2(c2),
+    **c2.fun2(c2),
     VOID fun1(FLOAT par1) {
         par1 = par1,
         RETURN,

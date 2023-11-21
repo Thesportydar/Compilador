@@ -9,7 +9,7 @@ public class SymbolTable {
     private HashMap<Integer, SymbolTableEntry> symbolTable;
     private int nextPtr;
 
-    private class SymbolTableEntry {
+    public class SymbolTableEntry {
         private int tokenId;
         private String lexema;
         private HashMap<String, String> attributes;
@@ -170,6 +170,10 @@ public class SymbolTable {
         }
     }
 
+    // implemetar un metodo para que puede ser iterada con un foreach
+    public Set<Integer> keySet() {
+        return symbolTable.keySet();
+    }
     public static void main(String[] args) {
         String lexema = "class";
         String[] lexemaSplit = lexema.split("\\.");

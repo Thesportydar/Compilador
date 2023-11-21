@@ -1,35 +1,46 @@
-clase 5
-clase 5
-clase 5
 
 Estructuras Sintacticas:
-Linea(3): FUNCTION :main:global
-Linea(4): Asignacion al identificador var1:global
-Linea(5): CLASS : cls1:global:main
-Linea(7): FUNCTION :main:global:main:cls1
-Linea(8): Identificador var1:global fue usado en el lado derecho y tambien 2+ veces en el lado izquierdo
-Linea(-1): Asignacion al identificador var1:global
-Linea(9): Increment al identificador var1:global
-Linea(-1): Asignacion al identificador bar:global:main:cls1
-Linea(14): Invocacion a la funcion main:global:main:cls1
-Linea(18): Invocacion a la funcion main:global
-
-Errores Semanticos:
-Error (Linea 15): Los tipos cls1 y int(1) no son compatibles
+Linea(6): Asignacion al identificador var1:global
+Linea(7): Asignacion al identificador var1:global
+Linea(8): Asignacion al identificador var1:global
+Linea(10): Asignacion al identificador var1:global
+Linea(9): IF
+Linea(12): Asignacion al identificador var1:global
+Linea(13): Asignacion al identificador var2:global
+Linea(16): Asignacion al identificador var1:global
+Linea(17): Asignacion al identificador var1:global
+Linea(18): Asignacion al identificador var1:global
+Linea(5): IF
 Semantic Table:
 Ptr	TokenID	Lexema	Attributes
-1	257	var1:global	uso: identificador	valid: 1	check_rhs: true	tipo: 266	check_lhs: true	
-2	257	main:global	uso: FUNCTION	valid: 1	tipo: 263	parameter: 3	
-3	257	par1:global:main	uso: identificador	valid: 1	tipo: 266	
-5	257	cls1:global:main	uso: CLASS	valid: 1	
-6	257	bar:global:main:cls1	uso: identificador	valid: 1	check_rhs: true	tipo: 266	check_lhs: global:main:cls1:main	
-7	257	main:global:main:cls1	uso: FUNCTION	valid: 1	tipo: 263	
-9	266	1	
-11	257	c1:global:main	uso: identificador	valid: 1	tipo: 5	
+1	257	var1:global	uso: identificador	valid: 1	tipo: 266	
+2	257	var2:global	uso: identificador	valid: 1	tipo: 266	
+5	269	1	uso: cte	tipo: 269	
+6	269	1	uso: cte	tipo: 269	
+7	269	1	uso: cte	tipo: 269	
+8	269	1	uso: cte	tipo: 269	
+9	269	3	uso: cte	tipo: 269	
+10	269	2	uso: cte	tipo: 269	
+11	269	3	uso: cte	tipo: 269	
+12	269	2	uso: cte	tipo: 269	
+13	269	2	uso: cte	tipo: 269	
+14	269	2	uso: cte	tipo: 269	
 Pila de Tercetos:
-(=, 1, 1)
+(==, 1, 2)
+(BF, [1], [14])
+(=, 1, 5)
 (=, 1, 6)
-(+, 1, 9)
-(=, 1, [3])
-(=, 6, [4])
-Ambito actual: global
+(=, 1, 7)
+(==, 1, 8)
+(BF, [6], [10])
+(=, 1, 9)
+(BI, [10], -1)
+(END_IF0, -1, -1)
+(=, 1, 10)
+(=, 2, 11)
+(BI, [18], -1)
+(END_IF1, -1, -1)
+(=, 1, 12)
+(=, 1, 13)
+(=, 1, 14)
+(END_IF2, -1, -1)

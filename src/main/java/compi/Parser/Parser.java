@@ -19,6 +19,7 @@
 //#line 2 "gramatica.y"
 package compi.Parser;
 import compi.AccionesSemanticas.AccionSemantica;
+import compi.AssemblyGenerator.AssemblyGenerator;
 import compi.*;
 
 import java.io.*;
@@ -608,7 +609,7 @@ final static String yyrule[] = {
 "herencia_clase : ID ','",
 };
 
-//#line 285 "gramatica.y"
+//#line 288 "gramatica.y"
 public static final String ERROR = "Error";
 public static final List<String> errores_lexicos = new ArrayList<>();
 public static final List<String> errores_sintacticos = new ArrayList<>();
@@ -1012,12 +1013,12 @@ public Integer crearTercetoExp(ParserVal lhs, ParserVal rhs, String op) {
 public Integer crearTercetoTermino(ParserVal lhs, ParserVal rhs, String op) {
     if (lhs.ival == 0 || rhs.ival == 0) return 0;
 
-    if (lhs.dval == rhs.dval) {
+    if (lhs.dval != rhs.dval) {
         agregarError(errores_semanticos, Parser.ERROR,
             String.format(ERROR_TIPOS_INCOMPATIBLES, getTipo((int)lhs.dval), getTipo((int)rhs.dval)));
         return 0;
     }
-    return crearTerceto("*", lhs.ival, rhs.ival, lhs.sval, rhs.sval);
+    return crearTerceto(op, lhs.ival, rhs.ival, lhs.sval, rhs.sval);
 }
 
 public Integer crearTercetoAsignacion(Integer lhs, ParserVal rhs) {
@@ -1155,6 +1156,7 @@ LexicalAnalyzer lexicalAnalyzer;
 SymbolTable st;
 PilaTercetos pilaTercetos;
 Integer inicio_while, tipo, claseActual;
+int countIF = 0;
 Ambito ambitoActual = new Ambito("global");
 boolean check;
 
@@ -1164,7 +1166,7 @@ public static void main(String[] args) {
     SymbolTable sttemp = new SymbolTable();
 
     FuncionesAuxiliares.loadMatrixs(mI, mA, "test.csv", sttemp, errores_lexicos);
-    Parser parser = new Parser(new LexicalAnalyzer(args[0], mI, mA, errores_lexicos), sttemp);
+    Parser parser = new Parser(new LexicalAnalyzer("test2.txt", mI, mA, errores_lexicos), sttemp);
     parser.run();
     
     Parser.imprimirErrores(errores_lexicos, "Errores Lexicos");
@@ -1174,6 +1176,18 @@ public static void main(String[] args) {
     
     parser.st.print();
     parser.pilaTercetos.print();
+
+    if (errores_lexicos.isEmpty() && errores_sintacticos.isEmpty() && errores_semanticos.isEmpty()) {
+        AssemblyGenerator asm = new AssemblyGenerator(parser.pilaTercetos, parser.st, "output.asm");
+        try {
+            asm.generarCabecera();
+            asm.generarAssembler();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    
     System.out.println("Ambito actual: " + parser.ambitoActual.toString());
 }
 
@@ -1183,7 +1197,7 @@ public Parser(LexicalAnalyzer lexicalAnalyzer, SymbolTable st) {
     this.pilaTercetos = new PilaTercetos();
     //yydebug = true;
 }
-//#line 1115 "Parser.java"
+//#line 1128 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1526,24 +1540,27 @@ case 64:
 break;
 case 65:
 //#line 135 "gramatica.y"
-{ agregarEstructura("IF"); 
-                                                         completarB("BI", pilaTercetos.getContador()+1); }
+{ agregarEstructura("IF");
+                                                         completarB("BI", pilaTercetos.getContador()); }
 break;
 case 66:
 //#line 137 "gramatica.y"
 { agregarEstructura("IF"); 
-                                                                          completarB("BI", pilaTercetos.getContador()+1); }
+                                                                          completarB("BI", pilaTercetos.getContador()+1);
+                                                                          crearTerceto("END_IF"+countIF++, -1, -1, "", ""); }
 break;
 case 67:
-//#line 141 "gramatica.y"
-{ crearTerceto("BI", -1, -1, "", ""); completarB("BF", pilaTercetos.getContador()+1);  }
+//#line 142 "gramatica.y"
+{ crearTerceto("BI", -1, -1, "", "");
+                                               completarB("BF", pilaTercetos.getContador()+1);
+                                               crearTerceto("END_IF"+countIF++, -1, -1, "", ""); }
 break;
 case 69:
-//#line 147 "gramatica.y"
+//#line 150 "gramatica.y"
 { yyval.ival = crearTerceto("BF", val_peek(1).ival, -1, val_peek(1).sval, ""); }
 break;
 case 70:
-//#line 150 "gramatica.y"
+//#line 153 "gramatica.y"
 {   if (val_peek(2).ival == 0 || val_peek(0).ival == 0) break;
 
                                                                     if (val_peek(2).dval != val_peek(0).dval) {
@@ -1556,87 +1573,87 @@ case 70:
                                                                 }
 break;
 case 71:
-//#line 160 "gramatica.y"
+//#line 163 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una expresión aritmética");}
 break;
 case 72:
-//#line 161 "gramatica.y"
+//#line 164 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una expresión aritmética");}
 break;
 case 73:
-//#line 162 "gramatica.y"
+//#line 165 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un comparador");}
 break;
 case 74:
-//#line 163 "gramatica.y"
+//#line 166 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba dos expresión aritmética");}
 break;
 case 75:
-//#line 168 "gramatica.y"
+//#line 171 "gramatica.y"
 { yyval.ival = crearTercetoExp(val_peek(2), val_peek(0), "+"); yyval.sval = "terceto"; if (yyval.ival != 0) yyval.dval = val_peek(2).dval; }
 break;
 case 76:
-//#line 169 "gramatica.y"
+//#line 172 "gramatica.y"
 { yyval.ival = crearTercetoExp(val_peek(2), val_peek(0), "-"); yyval.sval = "terceto"; if (yyval.ival != 0) yyval.dval = val_peek(2).dval; }
 break;
 case 77:
-//#line 170 "gramatica.y"
+//#line 173 "gramatica.y"
 { yyval = val_peek(0); }
 break;
 case 78:
-//#line 171 "gramatica.y"
-{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
-break;
-case 79:
-//#line 172 "gramatica.y"
-{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
-break;
-case 80:
-//#line 173 "gramatica.y"
-{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
-break;
-case 81:
 //#line 174 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
 break;
-case 82:
+case 79:
 //#line 175 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
 break;
-case 83:
+case 80:
 //#line 176 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
 break;
-case 84:
+case 81:
+//#line 177 "gramatica.y"
+{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
+break;
+case 82:
+//#line 178 "gramatica.y"
+{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
+break;
+case 83:
 //#line 179 "gramatica.y"
+{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
+break;
+case 84:
+//#line 182 "gramatica.y"
 { yyval.ival = crearTercetoTermino(val_peek(2), val_peek(0), "*"); yyval.sval = "terceto"; if (yyval.ival != 0) yyval.dval = val_peek(2).dval; }
 break;
 case 85:
-//#line 180 "gramatica.y"
+//#line 183 "gramatica.y"
 { yyval.ival = crearTercetoTermino(val_peek(2), val_peek(0), "/"); yyval.sval = "terceto"; if (yyval.ival != 0) yyval.dval = val_peek(2).dval; }
 break;
 case 86:
-//#line 181 "gramatica.y"
+//#line 184 "gramatica.y"
 { yyval = val_peek(0); }
 break;
 case 87:
-//#line 182 "gramatica.y"
-{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
-break;
-case 88:
-//#line 183 "gramatica.y"
-{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
-break;
-case 89:
-//#line 184 "gramatica.y"
-{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
-break;
-case 90:
 //#line 185 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
 break;
+case 88:
+//#line 186 "gramatica.y"
+{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
+break;
+case 89:
+//#line 187 "gramatica.y"
+{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
+break;
+case 90:
+//#line 188 "gramatica.y"
+{agregarError(errores_sintacticos, Parser.ERROR, "Error dos operadores juntos");}
+break;
 case 91:
-//#line 189 "gramatica.y"
+//#line 192 "gramatica.y"
 {   yyval.ival = st.getPtr(st.getLexema(val_peek(0).ival), ambitoActual.copy(), "identificador");
                                                     if (yyval.ival == 0) {
                                                         agregarError(errores_semanticos, Parser.ERROR,
@@ -1656,15 +1673,15 @@ case 91:
                                                 }
 break;
 case 92:
-//#line 206 "gramatica.y"
+//#line 209 "gramatica.y"
 { yyval = crearTercetoIncrement(val_peek(1).ival); }
 break;
 case 93:
-//#line 207 "gramatica.y"
+//#line 210 "gramatica.y"
 { yyval.ival = val_peek(0).ival; yyval.sval = "st"; yyval.dval = val_peek(0).dval; }
 break;
 case 94:
-//#line 208 "gramatica.y"
+//#line 211 "gramatica.y"
 {   yyval.ival = st.getPtr(st.getLexema(val_peek(0).ival), ambitoActual.copy());
                                                     if (yyval.ival != 0) {
                                                         yyval.sval = "st";
@@ -1681,94 +1698,94 @@ case 94:
                                                 }
 break;
 case 95:
-//#line 224 "gramatica.y"
+//#line 227 "gramatica.y"
 { yyval.ival = NOT_EQUAL; }
 break;
 case 96:
-//#line 225 "gramatica.y"
+//#line 228 "gramatica.y"
 { yyval.ival = EQUAL; }
 break;
 case 97:
-//#line 226 "gramatica.y"
+//#line 229 "gramatica.y"
 { yyval.ival = GREATER_EQUAL; }
 break;
 case 98:
-//#line 227 "gramatica.y"
+//#line 230 "gramatica.y"
 { yyval.ival = LESS_EQUAL; }
 break;
 case 99:
-//#line 228 "gramatica.y"
+//#line 231 "gramatica.y"
 { yyval.ival = 60; }
 break;
 case 100:
-//#line 229 "gramatica.y"
+//#line 232 "gramatica.y"
 { yyval.ival = 62; }
 break;
 case 103:
-//#line 235 "gramatica.y"
+//#line 238 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al comienzo del bloque de sentencias ejecutables");}
 break;
 case 104:
-//#line 236 "gramatica.y"
+//#line 239 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final del bloque de sentencias ejecutables");}
 break;
 case 105:
-//#line 237 "gramatica.y"
+//#line 240 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Se espera un bloque de sentencias ejecutables");}
 break;
 case 111:
-//#line 250 "gramatica.y"
+//#line 253 "gramatica.y"
 {agregarEstructura("PRINT");}
 break;
 case 112:
-//#line 251 "gramatica.y"
+//#line 254 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una cadena para imprimir");}
 break;
 case 113:
-//#line 254 "gramatica.y"
+//#line 257 "gramatica.y"
 { agregarEstructura("WHILE");
                                                                              crearTerceto("BI", -1, -1, "", "");
                                                                              completarB("BF", pilaTercetos.getContador()+1);
                                                                              completarWhile(); }
 break;
 case 114:
-//#line 258 "gramatica.y"
+//#line 261 "gramatica.y"
 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
 break;
 case 115:
-//#line 261 "gramatica.y"
+//#line 264 "gramatica.y"
 { inicio_while = pilaTercetos.getContador()+1; }
 break;
 case 116:
-//#line 264 "gramatica.y"
+//#line 267 "gramatica.y"
 { ambitoActual.pop(); claseActual = null; }
 break;
 case 117:
-//#line 265 "gramatica.y"
+//#line 268 "gramatica.y"
 { ambitoActual.pop(); claseActual = null; }
 break;
 case 118:
-//#line 266 "gramatica.y"
+//#line 269 "gramatica.y"
 { ambitoActual.pop(); claseActual = null; }
 break;
 case 119:
-//#line 267 "gramatica.y"
+//#line 270 "gramatica.y"
 { agregarClase(val_peek(1).ival, "FDCLASS"); ambitoActual.pop(); claseActual = null; }
 break;
 case 120:
-//#line 268 "gramatica.y"
+//#line 271 "gramatica.y"
 { agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final de la clase");
                                                              ambitoActual.pop(); }
 break;
 case 121:
-//#line 272 "gramatica.y"
+//#line 275 "gramatica.y"
 { agregarClase(val_peek(0).ival, "CLASS"); }
 break;
 case 125:
-//#line 281 "gramatica.y"
+//#line 284 "gramatica.y"
 { heredar(val_peek(1).ival); }
 break;
-//#line 1695 "Parser.java"
+//#line 1711 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
