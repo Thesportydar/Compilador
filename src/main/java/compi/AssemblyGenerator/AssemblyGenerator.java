@@ -178,7 +178,7 @@ public class AssemblyGenerator {
                 generarCodigoBI(terceto);
                 break;
             case "PRINT":
-                generarCodigoPrint(sop1);
+                cursorBuffer.append("invoke MessageBox, NULL, addr @" + sop1 + ", addr @" + sop1 + ", MB_OK\n");
                 break;
             case "CALL":
                 cursorBuffer.append("call " + st.getLexema(op1).replaceAll(":", "@") + "\n");
@@ -193,12 +193,6 @@ public class AssemblyGenerator {
                 //cursorBuffer.append(st.getLexema(op1) + " endp\n");
                 if (--nesting == 0)
                     cursorBuffer = startBuffer;
-                break;
-            case "&&":
-                generarCodigoAnd(tipo, sop1, sop2);
-                break;
-            case "||":
-                generarCodigoOr(tipo, sop1, sop2);
                 break;
             case "<":
             case ">":
@@ -236,6 +230,11 @@ public class AssemblyGenerator {
                 cursorBuffer.append("fadd @" + op2 + "\n");
                 aux = obtenerVarAux(tipo, "dd");
                 cursorBuffer.append("fstp @aux" + aux.toString() + "\n");
+                // verificar overflow
+                cursorBuffer.append("fstsw ax\n");
+                cursorBuffer.append("sahf\n");
+                cursorBuffer.append("jno NoOverflowDetected\n");
+                overflow();
                 break;
         }
         return aux;
@@ -276,12 +275,17 @@ public class AssemblyGenerator {
                 cursorBuffer.append("imul @" + op2 + "\n"); // multiplicacion con signo
                 aux = obtenerVarAux(tipo, "dw");
                 cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
+                // verificar overflow
+                cursorBuffer.append("jno NoOverflowDetected\n");
+                overflow();
                 break;
             case (Parser.UINT)://16b 0 to 65535
                 cursorBuffer.append("mov eax, @" + op1 + "\n");
                 cursorBuffer.append("mul @" + op2 + "\n"); // multiplicacion sin signo
                 aux = obtenerVarAux(tipo, "dd");
                 cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
+                cursorBuffer.append("jno NoOverflowDetected\n");
+                overflow();
                 break;
             case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
                 cursorBuffer.append("fld @" + op1 + "\n");
@@ -298,10 +302,6 @@ private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws
 
     switch (tipo) {
         case (Parser.SHORT):
-            // compruebo si el divisor es cero
-            cursorBuffer.append("mov ax, @" + op2 + "\n");
-            cursorBuffer.append("cmp ax, 0\n");
-            // si no es cero, continuar con la división
             cursorBuffer.append("mov ax, @" + op1 + "\n");
             cursorBuffer.append("idiv @" + op2 + "\n");
             aux = obtenerVarAux(tipo, "dw");
@@ -309,10 +309,6 @@ private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws
             break;
 
         case (Parser.UINT):
-            // compruebo si el divisor es cero
-            cursorBuffer.append("mov eax, @" + op2 + "\n");
-            cursorBuffer.append("cmp eax, 0\n");
-            // si no es cero, continuar con la división
             cursorBuffer.append("mov eax, @" + op1 + "\n");
             cursorBuffer.append("xor edx, edx\n"); // Limpiar edx para la división sin signo
             cursorBuffer.append("div @" + op2 + "\n");
@@ -321,14 +317,6 @@ private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws
             break;
 
         case (Parser.FLOAT):
-            // cargo un cero en la cima de la pila
-            cursorBuffer.append("fldz\n");
-            // comparo el divisor con cero
-            cursorBuffer.append("fcomp @" + op2 + "\n");
-            // verificar el estado del fpu
-            cursorBuffer.append("fstsw ax\n");
-            cursorBuffer.append("sahf\n");
-            // Si el divisor no es cero, continuar con la división
             cursorBuffer.append("fld @" + op1 + "\n");
             cursorBuffer.append("fdiv @" + op2 + "\n");
             aux = obtenerVarAux(tipo, "dd");
@@ -354,45 +342,6 @@ private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws
                 cursorBuffer.append("fstp @" + op1 + "\n");
                 break;
         }
-    }
-
-    public Integer generarCodigoAnd(Short tipo, String op1, String op2) throws IOException {
-        Integer aux = 0;
-        
-        switch(tipo) {
-            case (Parser.SHORT)://16b
-                cursorBuffer.append("mov ax, @" + op1 + "\n");
-                cursorBuffer.append("and ax, @" + op2 + "\n");
-                aux = obtenerVarAux(tipo, "dw");
-                cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
-                break;
-            case (Parser.UINT)://16b 0 to 65535
-                cursorBuffer.append("mov eax, @" + op1 + "\n");
-                cursorBuffer.append("and eax, @" + op2 + "\n");
-                aux = obtenerVarAux(tipo, "dd");
-                cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
-                break;
-        }
-        return aux;
-    }
-
-    public Integer generarCodigoOr(Short tipo, String op1, String op2) throws IOException {
-        Integer aux = 0;
-        
-        switch(tipo) {
-            case (Parser.SHORT)://16b
-                cursorBuffer.append("mov ax, @" + op1 + "\n");
-                cursorBuffer.append("or ax, @" + op2 + "\n");
-                aux = obtenerVarAux(tipo, "dw");
-                cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
-                break;
-            case (Parser.UINT)://16b 0 to 65535
-                cursorBuffer.append("mov eax, @" + op1 + "\n");
-                cursorBuffer.append("or eax, @" + op2 + "\n");
-                aux = obtenerVarAux(tipo, "dd");
-                cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
-        }
-        return aux;
     }
 
     public void generarCodigoComparacion(Short tipo, String op1, String op2) throws IOException {
@@ -461,8 +410,9 @@ private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws
         cursorBuffer.append("jmp " + tag + "\n");
     }
 
-    public void generarCodigoPrint(String op1) throws IOException {
-        // imprimir la cadena de caracteres con messagebox
-        cursorBuffer.append("invoke MessageBox, NULL, addr @" + op1 + ", addr @" + op1 + ", MB_OK\n");
+    private void overflow() throws IOException {
+        cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @overflow, MB_OK\n");
+        cursorBuffer.append("invoke ExitProcess, 0\n");
+        cursorBuffer.append("NoOverflowDetected:\n");
     }
 }

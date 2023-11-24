@@ -1,6 +1,6 @@
 {
     CLASS cls1 {
-        SHORT var1; var9
+        SHORT var1;var9,
         VOID fun1(){
             var1 = 1_s,
             RETURN,
@@ -22,16 +22,10 @@
         cls3,
     }
 
-    CLASS cls5 {
-        cls4,
-    }
-
     cls2 c2,
     c2.fun1(),
     cls3 c3,
     c3.fun1(),
     cls4 c4,
     c4.fun1(),
-    cls5 c5,
-    c5.fun1(),
 }

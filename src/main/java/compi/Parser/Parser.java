@@ -715,27 +715,34 @@ public void declararVariable(Integer ptr) {
         agregarError(errores_semanticos, Parser.ERROR, String.format(ERROR_REDECLARACION, st.getLexema(ptr), ambitoActual.toString()));
         return;
     }
+
     st.setAttribute(ptr, "tipo", tipo.toString());
     st.setAttribute(ptr, "valid", "1");
     st.setLexema(ptr, st.getLexema(ptr) + ":" + ambitoActual.toString());
+
     if (check) {
         st.setAttribute(ptr, "check_lhs", "false");
         st.setAttribute(ptr, "check_rhs", "false");
     }
-    if (claseActual != null) { // agregarlo a la lista de atributos de la clase}
-        String attList = st.getAttribute(claseActual, "attList");
-        if (attList == null)
-            attList = "";
-        else
-            attList += ",";
-        attList += ptr.toString();
-        st.setAttribute(claseActual, "attList", attList);
-    }
+
+    if (claseActual != null) // agregarlo a la lista de atributos de la clase}
+        addAttToList(claseActual, ptr);
+
     if (declarandoInstancia)
         declararAtributos(ptr);
 }
 
-public void declararAtributos(Integer ptr) {
+public void addAttToList(Integer cls, Integer att) {
+    String attList = st.getAttribute(cls, "attList");
+    if (attList == null)
+        attList = "";
+    else
+        attList += ",";
+    attList += att.toString();
+    st.setAttribute(cls, "attList", attList);
+}
+
+public void declararAtributos(Integer ptr, Boolean heredando) {
     Integer tipo = Integer.parseInt(st.getAttribute(ptr, "tipo"));
     String attList = st.getAttribute(tipo, "attList");
     // declrar cada uno de los atributos como lexema.attx:ambito    
@@ -745,19 +752,43 @@ public void declararAtributos(Integer ptr) {
             String att0 = st.getLexema(Integer.parseInt(att_cls)).split(":")[0]; // var1:global:class1 -> var1
             String[] instance_parts = st.getLexema(ptr).split(":");
 
-            String instance_att = instance_parts[0] + "." + att0; // c1.var1
+            String instance_att = "";
+            if (!heredando) instance_att = instance_parts[0] + "."; // c1.
+            instance_att += att0; // c1.var1 || var1
+
             for (int i = 1; i < instance_parts.length; i++)
                 instance_att += ":" + instance_parts[i]; // c1.var1:global:main
-            
+
+            if (heredando)
+                instance_att += ":" + instance_parts[0]; // var:global:class2
+
             Integer ptr_ins = st.addEntry(instance_att, ID);
             st.setAttribute(ptr_ins, "tipo", st.getAttribute(Integer.parseInt(att_cls), "tipo"));
             st.setAttribute(ptr_ins, "valid", "1");
-            st.setAttribute(ptr_ins, "uso", "identificador");
+            String uso = st.getAttribute(Integer.parseInt(att_cls), "uso");
+            st.setAttribute(ptr_ins, "uso", uso);
+            // si es funcion entonces indicar donde se implementa
+            // como asi tambien la var self
+            if (uso.equals("FUNCTION")) {
+                String impl_cls = st.getAttribute(Integer.parseInt(att_cls), "impl");
+                if (impl_cls == null)
+                    impl_cls = att_cls;
+                st.setAttribute(ptr_ins, "impl", impl_cls);
+                st.setAttribute(ptr_ins, "self", ptr.toString());
+            }
             // si es una instancia, hay que declarar los atributos de la clase
             if (isInstancia(ptr_ins))
                 declararAtributos(ptr_ins);
+
+            // si esta heredando se lo agregamos a los attlist
+            if (heredando)
+                addAttToList(ptr, ptr_ins);
         }
     }
+}
+
+public void declararAtributos(Integer ptr) {
+    declararAtributos(ptr, false);
 }
 
 public boolean isInstancia(Integer ptr) {
@@ -779,6 +810,7 @@ public void heredar(Integer padre) {
         return;
     }
     st.setAttribute(claseActual, "tipo", ""+ptr);
+    declararAtributos(claseActual, true);
 
     if (st.getAttribute(ptr, "tipo") != null) {
         ptr = Integer.parseInt(st.getAttribute(ptr, "tipo"));
@@ -981,11 +1013,6 @@ public void verificarRango(Integer ptr_cte) {
 }
 
 public void invocacionFuncion(Integer id, ParserVal param) {
-    //if (id == 0) {
-        //agregarError(errores_semanticos, Parser.ERROR,
-                //String.format(ERROR_ST, st.getLexema(id)));
-        //return;
-    //}
     Integer ptr;
     if (!st.getLexema(id).contains(":")) // inv a funcion
         ptr = st.getPtr(st.getLexema(id), ambitoActual.copy(), "FUNCTION");
@@ -1016,15 +1043,95 @@ public void invocacionFuncion(Integer id, ParserVal param) {
                 String.format(ERROR_PARAMETRO, st.getLexema(ptr), "void"));
         return;
     }
-    agregarEstructuraLlamados("Invocacion a la funcion ", ptr);
+    //agregarEstructuraLlamados("Invocacion a la funcion ", ptr);
+    // si es un metodo hay que copiar todos los atributos
+    //if (st.getLexema(id).contains("."))
+        //copiaAtributosValor(id);
+
     if (param != null) 
         crearTerceto("CALL",id, param.ival,"","");
     else
         crearTerceto("CALL",id, -1,"","");
+
+    //if (st.getLexema(id).contains("."))
+        //copiaAtributosResultado(id);
 }
 
 public void invocacionFuncion(Integer id) {
     invocacionFuncion(id, null);
+}
+
+public void invocacionMetodo(Integer ptr, ParserVal param) {
+    if (param != null && param.ival == 0)
+        return;
+
+    String param_formal = st.getAttribute(ptr, "parameter");
+    if (param_formal != null) {
+        param_formal = st.getAttribute(Integer.parseInt(param_formal), "tipo");
+        if (param == null || Integer.parseInt(param_formal) != (int)param.dval) {
+            agregarError(errores_semanticos, Parser.ERROR,
+                    String.format(ERROR_PARAMETRO, st.getLexema(ptr), param_formal));
+            return;
+        }
+    }
+    else if (param != null) {
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_PARAMETRO, st.getLexema(ptr), "void"));
+        return;
+    }
+    agregarEstructuraLlamados("Invocacion a la funcion ", ptr);
+    // ptr -> cls4.fun1:global:main
+    // tiene att impl==null si implementa la funcion sino impl apunta a la funcion
+    Integer impl = Integer.parseInt(st.getAttribute(ptr, "impl"));
+    copiaAtributos(ptr, impl, true);
+
+    if (param != null) 
+        crearTerceto("CALL",impl, param.ival,"","");
+    else
+        crearTerceto("CALL",impl, -1,"","");
+
+    copiaAtributos(ptr, impl, false);
+}
+
+public void invocacionMetodo(Integer id) {
+    invocacionMetodo(id, null);
+}
+
+public void copiaAtributos(Integer met, Integer impl, Boolean copiaValor) {
+    Integer cls = Integer.parseInt(st.getAttribute(impl, "cls"));
+    // met tiene att self = cls4:global:main
+    // self tiene tipo = global:main:class4 que a su vez tiene attList
+    // copiar creando tercetos los att de self a impl
+    Integer self = Integer.parseInt(st.getAttribute(met, "self"));
+    String[] atts = st.getAttribute(cls, "attList").split(",");
+    for (String at : atts) {
+        if (!st.getAttribute(Integer.parseInt(at), "uso").equals("identificador"))
+            continue;
+        // at -> var1:global:class1 -> var1
+        // self -> cls4:global:main -> cls4, global:main
+        // met -> cls4.fun1:global:main -> cls4, global:main
+        // result -> cls4.var1:global:main
+        //String[] self_parts = st.getLexema(met).split(":");
+        String[] self_parts = st.getLexema(self).split(":");
+        // self_parts[0] puede ser c1.c2.c4.fun1 -> c1.c2.c4
+        //String[] part0 = self_parts[0].split("\\.");
+        //self_parts[0] = part0[0];
+        //for (int i = 1; i < part0.length-1; i++)
+            //self_parts[0] += "." + part0[i];
+        // quitarle el ambito a at
+        String at_lex = st.getLexema(Integer.parseInt(at)).split(":")[0];
+        String result = self_parts[0] + "." + at_lex;
+        for (int i = 1; i < self_parts.length; i++)
+            result += ":" + self_parts[i];
+
+        System.out.println("copiaAtributosValor: " + result);
+        Integer ptr = st.getPtr(result);
+        // copiar ptr en at
+        if (copiaValor)
+            crearTerceto("=", ptr, Integer.parseInt(at), "st", "st");
+        else
+            crearTerceto("=", Integer.parseInt(at), ptr, "st", "st");
+    }
 }
 
 public void agregarFuncion(Integer id, Short tipo, Integer parametro) {
@@ -1053,7 +1160,14 @@ public void agregarFuncion(Integer id, Short tipo, Integer parametro) {
     }
     // agrego el ambito al ambitoActual
     ambitoActual.push(st.getLexema(id).split(":")[0]);
-    agregarEstructura("FUNCTION :" + st.getLexema(id));
+
+    if (claseActual != null) {
+        // es un metodo, agregarlo a la lista de metodos de la clase
+        addAttToList(claseActual, id);
+        st.setAttribute(id, "cls", claseActual.toString()); // agregar el ptr a la clase
+    }
+
+    //agregarEstructura("FUNCTION :" + st.getLexema(id));
     crearTerceto("PROC", id, -1, "st", null);
 }
 
@@ -1242,7 +1356,7 @@ public static void main(String[] args) {
     SymbolTable sttemp = new SymbolTable();
 
     FuncionesAuxiliares.loadMatrixs(mI, mA, "test.csv", sttemp, errores_lexicos);
-    Parser parser = new Parser(new LexicalAnalyzer("test.txt", mI, mA, errores_lexicos), sttemp);
+    Parser parser = new Parser(new LexicalAnalyzer("test4.txt", mI, mA, errores_lexicos), sttemp);
     parser.run();
     
     Parser.imprimirErrores(errores_lexicos, "Errores Lexicos");
@@ -1580,11 +1694,11 @@ case 54:
 break;
 case 55:
 //#line 120 "gramatica.y"
-{ if (val_peek(3).ival != 0) invocacionFuncion(val_peek(3).ival, val_peek(1)); }
+{ if (val_peek(3).ival != 0) invocacionMetodo(val_peek(3).ival, val_peek(1)); }
 break;
 case 56:
 //#line 121 "gramatica.y"
-{ if (val_peek(2).ival != 0) invocacionFuncion(val_peek(2).ival); }
+{ if (val_peek(2).ival != 0) invocacionMetodo(val_peek(2).ival); }
 break;
 case 57:
 //#line 122 "gramatica.y"

@@ -117,8 +117,8 @@ inv_funcion          : ID '(' exp_aritmetica ')'        { invocacionFuncion($1.i
                      | ID '('                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;
 
-inv_metodo           : atributo_clase '(' exp_aritmetica ')'{ if ($1.ival != 0) invocacionFuncion($1.ival, $3); }
-                     | atributo_clase '(' ')'               { if ($1.ival != 0) invocacionFuncion($1.ival); }
+inv_metodo           : atributo_clase '(' exp_aritmetica ')'{ if ($1.ival != 0) invocacionMetodo($1.ival, $3); }
+                     | atributo_clase '(' ')'               { if ($1.ival != 0) invocacionMetodo($1.ival); }
                      | atributo_clase '('               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | atributo_clase ')'               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;

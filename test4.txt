@@ -1,0 +1,29 @@
+{
+    CLASS class1 {
+        SHORT var1,
+        VOID fun1() {
+            var1 = 1_s,
+            RETURN,
+        }
+    }
+    class1 cls1,
+    cls1.fun1(),
+
+    CLASS class2 {
+        class1 c1,
+    }
+    class2 cls2,
+    cls2.c1.fun1(),
+
+    CLASS class3 {
+        class2,
+    }
+    class3 cls3,
+    cls3.c1.fun1(),
+
+    CLASS class4 {
+        class1,
+    }
+    class4 cls4,
+    cls4.fun1(),
+}
