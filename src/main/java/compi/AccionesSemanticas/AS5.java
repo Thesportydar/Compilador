@@ -6,7 +6,7 @@ public class AS5 implements AccionSemantica {
     private SymbolTable st;
     final int RANGE;
     final String DESC;
-    final int ID_TOKEN, USO;
+    final int ID_TOKEN, ID_TIPO;
     private List<String> errores;
 
     public AS5(SymbolTable st, int range, String desc, int id, int id_tipo, List<String> errores_lexicos) {
@@ -14,7 +14,7 @@ public class AS5 implements AccionSemantica {
         this.RANGE = range;
         this.DESC = desc;
         this.ID_TOKEN = id;
-        this.USO = id_tipo;
+        this.ID_TIPO = id_tipo;
         this.errores = errores_lexicos;
     }
 
@@ -32,8 +32,9 @@ public class AS5 implements AccionSemantica {
             return -1;
         }
         Integer ptr =  st.addEntry(buffer.toString(), ID_TOKEN);
-        st.setAttribute(ptr, "tipo", ""+ID_TOKEN);
+        st.setAttribute(ptr, "tipo", ""+ID_TIPO);
         st.setAttribute(ptr, "uso", "cte");
+        st.setAttribute(ptr, "valid","1");
         return ptr;
     }
 

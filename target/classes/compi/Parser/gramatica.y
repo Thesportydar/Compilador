@@ -32,8 +32,8 @@ sentencias           : sentencias sen_declarativa
                      | error ','                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una sentencia ejecutable");}
                      ;
 
-sen_declarativa      : tipo list_var ','
-                     | sentencia_check tipo list_var ',' { check=false; }
+sen_declarativa      : tipo list_var ',' { if (declarandoInstancia) declarandoInstancia = false; }
+                     | sentencia_check tipo list_var ',' { check=false; if (declarandoInstancia) declarandoInstancia = false; }
                      | tipo list_var             {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
                      | funcion
                      | clase
@@ -45,14 +45,14 @@ sentencia_check      : CHECK { check=true; }
 tipo                 : SHORT { $$.ival = SHORT; tipo = (int)SHORT; }
                      | UINT  { $$.ival = UINT; tipo = (int)UINT; }
                      | FLOAT { $$.ival = FLOAT; tipo = (int)FLOAT; }
-                     | ID    { $$.ival = getTipoClase($1.ival, ambitoActual.copy()); tipo = $$.ival; }
+                     | ID    { $$.ival = getTipoClase($1.ival, ambitoActual.copy()); tipo = $$.ival; declarandoInstancia = true; }
                      ;
 
 CTE                  : CTE_SHORT     {verificarRango($1.ival); $$.ival = $1.ival; $$.dval = SHORT;}
                      | CTE_UINT      {$$.ival = $1.ival; $$.dval = UINT;}
                      | CTE_FLOAT     {verificarRango($1.ival); $$.ival = $1.ival; $$.dval = FLOAT;}
-                     | '-' CTE_SHORT {resolverSigno($2.ival); verificarRango($2.ival); $$.ival = $2.ival;}
-                     | '-' CTE_FLOAT {resolverSigno($2.ival); verificarRango($2.ival); $$.ival = $2.ival;}
+                     | '-' CTE_SHORT {resolverSigno($2.ival); verificarRango($2.ival); $$.ival = $2.ival; $$.dval = SHORT; }
+                     | '-' CTE_FLOAT {resolverSigno($2.ival); verificarRango($2.ival); $$.ival = $2.ival; $$.dval = FLOAT; }
                      | '-' CTE_UINT { agregarError(errores_sintacticos, Parser.ERROR, "No se puede negar un unsigned int");}
                      ;
 
@@ -60,8 +60,8 @@ list_var             : list_var ';' ID { declararVariable($3.ival); }
                      | ID               { declararVariable($1.ival); }
                      ;
 
-funcion              : header_funcion '{' cuerpo_funcion sen_retorno '}' { ambitoActual.pop(); }
-                     | header_funcion '{' cuerpo_funcion seleccion_func '}' { ambitoActual.pop(); }
+funcion              : header_funcion '{' cuerpo_funcion sen_retorno '}' { ambitoActual.pop(); crearTerceto("RET", -1, -1, null, null); }
+                     | header_funcion '{' cuerpo_funcion seleccion_func '}' { ambitoActual.pop(); crearTerceto("RET", -1, -1, null, null); }
                      | header_funcion cuerpo_funcion '}' {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al comienzo de la función");}
                      ;
 
@@ -251,7 +251,8 @@ sen_ejecutable_r     : sen_ejecutable_r sen_ejecutable
                      | sen_ejecutable
                      ;
 
-imprimir             : PRINT STR_1LN             {agregarEstructura("PRINT");}
+imprimir             : PRINT STR_1LN             { crearTerceto("PRINT", $2.ival, -1, "st", null);
+                                                   st.setAttribute($2.ival, "valid", "1"); }
                      | PRINT ','                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una cadena para imprimir");}
                      ;
 
@@ -398,6 +399,35 @@ public void declararVariable(Integer ptr) {
         st.setAttribute(ptr, "check_lhs", "false");
         st.setAttribute(ptr, "check_rhs", "false");
     }
+    if (claseActual != null) { // agregarlo a la lista de atributos de la clase}
+        String attList = st.getAttribute(claseActual, "attList");
+        if (attList == null)
+            attList = "";
+        else
+            attList += ",";
+        attList += ptr.toString();
+        st.setAttribute(claseActual, "attList", attList);
+    }
+    if (declarandoInstancia) {
+        String attList = st.getAttribute(tipo, "attList");
+        // declrar cada uno de los atributos como lexema.attx:ambito    
+        if (attList != null) {
+            String[] atts_cls = attList.split(","); // 3,4,6,8
+            for (String att_cls: atts_cls) {
+                String att0 = st.getLexema(Integer.parseInt(att_cls)).split(":")[0]; // var1:global:class1 -> var1
+                String[] instance_parts = st.getLexema(ptr).split(":");
+
+                String instance_att = instance_parts[0] + "." + att0; // c1.var1
+                for (int i = 1; i < instance_parts.length; i++)
+                    instance_att += ":" + instance_parts[i]; // c1.var1:global:main
+                
+                ptr = st.addEntry(instance_att, ID);
+                st.setAttribute(ptr, "tipo", st.getAttribute(Integer.parseInt(att_cls), "tipo"));
+                st.setAttribute(ptr, "valid", "1");
+                st.setAttribute(ptr, "uso", "identificador");
+            }
+        }
+    }
 }
 
 public void heredar(Integer padre) {
@@ -440,7 +470,7 @@ public void agregarClase(Integer id, String desc) {
     // add the scope to the lexema
     st.setLexema(id, st.getLexema(id) + ":" + ambitoActual.toString());
     st.setAttribute(id, "uso", desc);
-    st.setAttribute(id, "valid", "1");
+    st.setAttribute(id, "valid", "1");// TODO: CAMBIAR
     ambitoActual.push(st.getLexema(id).split(":")[0]);
     claseActual = id;
     agregarEstructura(desc +" : " + st.getLexema(id));
@@ -626,6 +656,10 @@ public void invocacionFuncion(Integer id, ParserVal param) {
         return;
     }
     agregarEstructuraLlamados("Invocacion a la funcion ", ptr);
+    if (param != null) 
+        crearTerceto("CALL",id, param.ival,"","");
+    else
+        crearTerceto("CALL",id, -1,"","");
 }
 
 public void invocacionFuncion(Integer id) {
@@ -659,6 +693,7 @@ public void agregarFuncion(Integer id, Short tipo, Integer parametro) {
     // agrego el ambito al ambitoActual
     ambitoActual.push(st.getLexema(id).split(":")[0]);
     agregarEstructura("FUNCTION :" + st.getLexema(id));
+    crearTerceto("PROC", id, -1, "st", null);
 }
 
 public Integer crearTerceto(String op, Integer lhs, Integer rhs, String tipoLhs, String tipoRhs) {
@@ -806,13 +841,17 @@ public void completarB(String b, Integer tercetoActual) {
 
     while (pilaTercetos.getContador() > 0) {
         terceto = pilaTercetos.pop();
-        if (terceto.getOperador().equals(b.toString()) && terceto.getOperando2() == -1) {
-            if (b.equals("BI"))
+        if (terceto.getOperador().equals(b.toString())) {
+            if (b.equals("BI") && terceto.getOperando1() == -1) {
                 terceto.setOperando1(tercetoActual, true);
-             else
+                pilaTercetos.apilar(terceto);
+                break;
+            }
+            else if (b.equals("BF") && terceto.getOperando2() == -1) {
                 terceto.setOperando2(tercetoActual, true);
-            pilaTercetos.apilar(terceto);
-            break;
+                pilaTercetos.apilar(terceto);
+                break;
+            }
         }
         aux.apilar(terceto);
     }
@@ -834,7 +873,7 @@ PilaTercetos pilaTercetos;
 Integer inicio_while, tipo, claseActual;
 int countIF = 0;
 Ambito ambitoActual = new Ambito("global");
-boolean check;
+boolean check, declarandoInstancia = false;
 
 public static void main(String[] args) {
     TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 28);
@@ -856,7 +895,6 @@ public static void main(String[] args) {
     if (errores_lexicos.isEmpty() && errores_sintacticos.isEmpty() && errores_semanticos.isEmpty()) {
         AssemblyGenerator asm = new AssemblyGenerator(parser.pilaTercetos, parser.st, "output.asm");
         try {
-            asm.generarCabecera();
             asm.generarAssembler();
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -871,5 +909,6 @@ public Parser(LexicalAnalyzer lexicalAnalyzer, SymbolTable st) {
     this.lexicalAnalyzer = lexicalAnalyzer;
     this.st = st;
     this.pilaTercetos = new PilaTercetos();
+    this.declarandoInstancia = false;
     //yydebug = true;
 }

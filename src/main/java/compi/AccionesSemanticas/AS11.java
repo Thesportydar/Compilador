@@ -12,7 +12,7 @@ public class AS11 implements AccionSemantica {
     @Override
     public Integer ejecutar(StringBuffer buffer, char c) {
         Integer ptr = st.addEntry(buffer.toString(), TOKEN_STRING_1LN);
-        st.setAttribute(ptr, "tipo", "string_1_ln");
+        st.setAttribute(ptr, "tipo", ""+TOKEN_STRING_1LN);
         return ptr;
     }
 

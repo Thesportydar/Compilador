@@ -2,11 +2,13 @@ package compi.AssemblyGenerator;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.print.attribute.standard.MediaSize.ISO;
 
+import compi.LexicalAnalyzer;
 import compi.PilaTercetos;
 import compi.SymbolTable;
 import compi.Terceto;
@@ -17,11 +19,18 @@ public class AssemblyGenerator {
     private SymbolTable st;
     private String filePath;
     private FileWriter fileWriter;
+    StringBuilder dataBuffer, codeBuffer, cursorBuffer, startBuffer;
     private int contadorAux = 0;
+    private int label = 0;
+    private int nesting = 0;
 
     public AssemblyGenerator(PilaTercetos pilaTercetos, SymbolTable st, String filePath) {
         this.pilaTercetos = pilaTercetos;
         this.st = st;
+        this.dataBuffer = new StringBuilder();
+        this.codeBuffer = new StringBuilder();
+        this.startBuffer = new StringBuilder();
+        this.cursorBuffer = startBuffer;
         this.filePath = filePath;
 
         try {
@@ -34,50 +43,90 @@ public class AssemblyGenerator {
 
     public void generarCabecera() throws IOException {
         // genera la cabecera .data
-        fileWriter.write(".386\n");
-        fileWriter.write(".model flat, stdcall\n");
-        fileWriter.write("option casemap :none\n");
-        fileWriter.write("include \\masm32\\include\\windows.inc\n");
-        fileWriter.write("include \\masm32\\include\\kernel32.inc\n");
-        fileWriter.write("include \\masm32\\include\\user32.inc\n");
-        fileWriter.write("includelib \\masm32\\lib\\kernel32.lib\n");
-        fileWriter.write("includelib \\masm32\\lib\\user32.lib\n");
-        fileWriter.write(".data\n");
+        dataBuffer.append(".386\n");
+        dataBuffer.append(".model flat, stdcall\n");
+        dataBuffer.append("option casemap :none\n");
+        dataBuffer.append("include \\masm32\\include\\windows.inc\n");
+        dataBuffer.append("include \\masm32\\include\\kernel32.inc\n");
+        dataBuffer.append("include \\masm32\\include\\user32.inc\n");
+        dataBuffer.append("includelib \\masm32\\lib\\kernel32.lib\n");
+        dataBuffer.append("includelib \\masm32\\lib\\user32.lib\n");
+        dataBuffer.append(".data\n");
         volcarTablaSimbolos();
+    }
+    // Mapear los tipos de datos a los tamaños correspondientes
+    private static final Map<String, String> tipoToSize = new HashMap<>();
+    // Bloque estático para inicializar el mapa
+    static {
+        tipoToSize.put("" + Parser.SHORT, "dw");
+        tipoToSize.put("" + Parser.UINT, "dd");
+        tipoToSize.put("" + Parser.FLOAT, "dd");
     }
     
     private void volcarTablaSimbolos() throws IOException {
         // codigo para volcar la tabla de simbolos a la seccion .data como dd ?
         for (Integer key : st.keySet()) {
             String tipo = st.getAttribute(key, "tipo");
-            if (tipo == null)
+            String uso = st.getAttribute(key, "uso");
+            String size = tipoToSize.get(tipo);
+            String valid = st.getAttribute(key, "valid");
+            
+            if (valid == null || !valid.equals("1") || tipo == null)
                 continue;
-            switch (tipo) {
-                case "string_1_ln":
-                    fileWriter.write("@" + key.toString() + " db " + st.getLexema(key) + ", 0\n");
+            
+            switch(tipo) {
+                case ""+Parser.STR_1LN:
+                    dataBuffer.append("@" + key + " db \"" + st.getLexema(key) + "\", 0\n");
                     break;
-                case ""+Parser.CTE_FLOAT:
-                case ""+Parser.CTE_SHORT:
-                case ""+Parser.CTE_UINT:
-                    fileWriter.write("@" + key.toString() + " dd " + st.getLexema(key) + "\n");
-                    break;
-                default:
-                    fileWriter.write("@" + key.toString() + " dd ?\n");
+                case "identificador":
+                case "cte":
+                    dataBuffer.append("@" + key + " " + size + " ");
+                    if (uso.equals("cte"))
+                    dataBuffer.append(st.getLexema(key) + "\n");
+                    else
+                        dataBuffer.append("?\n");
                     break;
             }
         }
     }
 
-    public Integer obtenerVarAux(Short tipo) {
-        st.setAttribute(st.addEntry("@aux"+contadorAux, Parser.ID), "tipo", ""+tipo);
+    public Integer obtenerVarAux(Short tipo, String size) { // TODO: reutilizar aux, hashmap con valid bit
+        // agregamos la nueva variable auxiliar a la tabla de simbolos para poder guardar si tipo
+        Integer ptr = st.addEntry("@aux"+contadorAux, Parser.ID);
+        st.setAttribute(ptr, "tipo", ""+tipo);
+        // volcamos la variable auxiliar a la seccion .data, size es dw, dd o db
+        dataBuffer.append("@aux" + contadorAux + " " + size + " ?\n");
         return contadorAux++;
     }
 
     public void generarAssembler() throws IOException{
-        fileWriter.write(".code\n");
+        generarCabecera();
+
         for (Terceto terceto : pilaTercetos)
             generarCodigoTerceto(terceto);
+
+        // volcar al fileWriter
+        fileWriter.write(dataBuffer.toString());
+        fileWriter.write(".code\n");
+        fileWriter.write(codeBuffer.toString());
+        fileWriter.write("start:\n");
+        fileWriter.write(startBuffer.toString());
+        fileWriter.write("invoke ExitProcess, 0\n");
+        fileWriter.write("end start\n");
         fileWriter.close();
+    }
+
+    private Short getTipo(Integer op, boolean esEtiqueta) {
+        if (!esEtiqueta)
+            return Short.parseShort(st.getAttribute(op, "tipo"));
+        else {
+            int terceto = pilaTercetos.get(op-1).getOperando1();
+            terceto = st.getPtr("@aux"+terceto);
+            if (terceto == 0)
+                return 0;
+            else
+                return Short.parseShort(st.getAttribute(terceto, "tipo"));
+        }
     }
 
     private void generarCodigoTerceto(Terceto terceto) throws IOException {
@@ -96,8 +145,9 @@ public class AssemblyGenerator {
             sop2 = "aux" + pilaTercetos.get(op2-1).getOperando1().toString();
         if (terceto.esEtiqueta1())
             sop1 = "aux" + pilaTercetos.get(op1-1).getOperando1().toString();
-        else if (op1 != -1)
-            tipo = Short.parseShort(st.getAttribute(terceto.getOperando1(), "tipo"));
+        
+        if (op1 != -1)
+            tipo = getTipo(op1, terceto.esEtiqueta1());
 
         Integer aux;
 
@@ -127,22 +177,29 @@ public class AssemblyGenerator {
             case "BI":
                 generarCodigoBI(terceto);
                 break;
-            /*case "while":
-                generarCodigoWhile(terceto);
+            case "PRINT":
+                generarCodigoPrint(sop1);
                 break;
-            case "print":
-                generarCodigoPrint(terceto);
+            case "CALL":
+                cursorBuffer.append("call " + st.getLexema(op1).replaceAll(":", "@") + "\n");
                 break;
-            case "call":
-                generarCodigoCall(terceto);
+            case "PROC":
+                cursorBuffer = codeBuffer;
+                cursorBuffer.append(st.getLexema(op1).replaceAll(":","@") + " proc\n");
+                nesting++;
                 break;
-            case "end":
-                generarCodigoEnd(terceto);
+            case "RET":
+                cursorBuffer.append("ret\n");
+                //cursorBuffer.append(st.getLexema(op1) + " endp\n");
+                if (--nesting == 0)
+                    cursorBuffer = startBuffer;
                 break;
             case "&&":
+                generarCodigoAnd(tipo, sop1, sop2);
+                break;
             case "||":
-                generarCodigoLogico(terceto);
-                break;*/
+                generarCodigoOr(tipo, sop1, sop2);
+                break;
             case "<":
             case ">":
             case "<=":
@@ -153,111 +210,207 @@ public class AssemblyGenerator {
                 break;
             default:
                 // es una etiqueta, agregarla
-                fileWriter.write(op + ":\n");
+                cursorBuffer.append(op + ":\n");
                 break;
         }
     }
 
     private Integer generarCodigoSuma(Short tipo, String op1, String op2) throws IOException {
-        Integer aux = obtenerVarAux(tipo);
+        Integer aux = 0;
 
         switch(tipo) {
             case (Parser.SHORT)://16b
-                fileWriter.write("mov ax, @" + op1 + "\n");
-                fileWriter.write("add ax, @" + op2 + "\n");
-                fileWriter.write("mov @aux" + aux.toString() + ", ax\n");
+                cursorBuffer.append("mov ax, @" + op1 + "\n");
+                cursorBuffer.append("add ax, @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dw");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
                 break;
             case (Parser.UINT)://16b 0 to 65535
+                cursorBuffer.append("mov eax, @" + op1 + "\n");
+                cursorBuffer.append("add eax, @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dd");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
+                break;
             case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
-                fileWriter.write("mov eax, @" + op1 + "\n");
-                fileWriter.write("add eax, @" + op2 + "\n");
-                fileWriter.write("mov @aux" + aux.toString() + ", eax\n");
+                cursorBuffer.append("fld @" + op1 + "\n");
+                cursorBuffer.append("fadd @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dd");
+                cursorBuffer.append("fstp @aux" + aux.toString() + "\n");
                 break;
         }
         return aux;
     }
 
     private Integer generarCodigoResta(Short tipo, String op1, String op2) throws IOException {
-        Integer aux = obtenerVarAux(tipo);
+        Integer aux = 0;
 
         switch(tipo) {
             case (Parser.SHORT)://16b
-                fileWriter.write("mov ax, @" + op1 + "\n");
-                fileWriter.write("sub ax, @" + op2 + "\n");
-                fileWriter.write("mov @aux" + aux.toString() + ", ax\n");
+                cursorBuffer.append("mov ax, @" + op1 + "\n");
+                cursorBuffer.append("sub ax, @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dw");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
                 break;
             case (Parser.UINT)://16b 0 to 65535
+                cursorBuffer.append("mov eax, @" + op1 + "\n");
+                cursorBuffer.append("sub eax, @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dd");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
+                break;
             case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
-                fileWriter.write("mov eax, @" + op1 + "\n");
-                fileWriter.write("sub eax, @" + op2 + "\n");
-                fileWriter.write("mov @aux" + aux.toString() + ", eax\n");
+                cursorBuffer.append("fld @" + op1 + "\n");
+                cursorBuffer.append("fsub @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dd");
+                cursorBuffer.append("fstp @aux" + aux.toString() + "\n");
                 break;
         }
         return aux;
     }
 
     private Integer generarCodigoMultiplicacion(Short tipo, String op1, String op2) throws IOException {
-        Integer aux = obtenerVarAux(tipo);
+        Integer aux = 0;
         
         switch(tipo) {
-            case (Parser.SHORT)://16b
-                fileWriter.write("mov ax, @" + op1 + "\n");
-                fileWriter.write("mul ax, @" + op2 + "\n");
-                fileWriter.write("mov @aux" + aux.toString() + ", ax\n");
+            case (Parser.SHORT)://16b con signo
+                cursorBuffer.append("mov ax, @" + op1 + "\n");
+                cursorBuffer.append("imul @" + op2 + "\n"); // multiplicacion con signo
+                aux = obtenerVarAux(tipo, "dw");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
                 break;
             case (Parser.UINT)://16b 0 to 65535
+                cursorBuffer.append("mov eax, @" + op1 + "\n");
+                cursorBuffer.append("mul @" + op2 + "\n"); // multiplicacion sin signo
+                aux = obtenerVarAux(tipo, "dd");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
+                break;
             case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
-                fileWriter.write("mov eax, @" + op1 + "\n");
-                fileWriter.write("mul eax, @" + op2 + "\n");
-                fileWriter.write("mov @aux" + aux.toString() + ", eax\n");
+                cursorBuffer.append("fld @" + op1 + "\n");
+                cursorBuffer.append("fmul @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dd");
+                cursorBuffer.append("fstp @aux" + aux.toString() + "\n");
                 break;
         }
         return aux;
     }
 
-    private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws IOException {
-        Integer aux = obtenerVarAux(tipo);
-        
-        switch(tipo) {
-            case (Parser.SHORT)://16b
-                fileWriter.write("mov ax, @" + op1 + "\n");
-                fileWriter.write("div ax, @" + op2 + "\n");
-                fileWriter.write("mov @aux" + aux.toString() + ", ax\n");
-                break;
-            case (Parser.UINT)://16b 0 to 65535
-            case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
-                fileWriter.write("mov eax, @" + op1 + "\n");
-                fileWriter.write("div eax, @" + op2 + "\n");
-                fileWriter.write("mov @aux" + aux.toString() + ", eax\n");
-                break;
-        }
-        return aux;
+private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws IOException {
+    Integer aux = 0;
+
+    switch (tipo) {
+        case (Parser.SHORT):
+            // compruebo si el divisor es cero
+            cursorBuffer.append("mov ax, @" + op2 + "\n");
+            cursorBuffer.append("cmp ax, 0\n");
+            // si no es cero, continuar con la división
+            cursorBuffer.append("mov ax, @" + op1 + "\n");
+            cursorBuffer.append("idiv @" + op2 + "\n");
+            aux = obtenerVarAux(tipo, "dw");
+            cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
+            break;
+
+        case (Parser.UINT):
+            // compruebo si el divisor es cero
+            cursorBuffer.append("mov eax, @" + op2 + "\n");
+            cursorBuffer.append("cmp eax, 0\n");
+            // si no es cero, continuar con la división
+            cursorBuffer.append("mov eax, @" + op1 + "\n");
+            cursorBuffer.append("xor edx, edx\n"); // Limpiar edx para la división sin signo
+            cursorBuffer.append("div @" + op2 + "\n");
+            aux = obtenerVarAux(tipo, "dd");
+            cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
+            break;
+
+        case (Parser.FLOAT):
+            // cargo un cero en la cima de la pila
+            cursorBuffer.append("fldz\n");
+            // comparo el divisor con cero
+            cursorBuffer.append("fcomp @" + op2 + "\n");
+            // verificar el estado del fpu
+            cursorBuffer.append("fstsw ax\n");
+            cursorBuffer.append("sahf\n");
+            // Si el divisor no es cero, continuar con la división
+            cursorBuffer.append("fld @" + op1 + "\n");
+            cursorBuffer.append("fdiv @" + op2 + "\n");
+            aux = obtenerVarAux(tipo, "dd");
+            cursorBuffer.append("fstp @aux" + aux.toString() + "\n");
+            break;
     }
+
+    return aux;
+}
 
     public void generarCodigoAsignacion(Short tipo, String op1, String op2) throws IOException {
         switch(tipo) {
             case (Parser.SHORT)://16b
-                fileWriter.write("mov ax, @" + op2 + "\n");
-                fileWriter.write("mov @" + op1 + ", ax\n");
+                cursorBuffer.append("mov ax, @" + op2 + "\n");
+                cursorBuffer.append("mov @" + op1 + ", ax\n");
                 break;
             case (Parser.UINT)://16b 0 to 65535
+                cursorBuffer.append("mov eax, @" + op2 + "\n");
+                cursorBuffer.append("mov @" + op1 + ", eax\n");
+                break;
             case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
-                fileWriter.write("mov eax, @" + op2 + "\n");
-                fileWriter.write("mov @" + op1 + ", eax\n");
+                cursorBuffer.append("fld @" + op2 + "\n");
+                cursorBuffer.append("fstp @" + op1 + "\n");
                 break;
         }
+    }
+
+    public Integer generarCodigoAnd(Short tipo, String op1, String op2) throws IOException {
+        Integer aux = 0;
+        
+        switch(tipo) {
+            case (Parser.SHORT)://16b
+                cursorBuffer.append("mov ax, @" + op1 + "\n");
+                cursorBuffer.append("and ax, @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dw");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
+                break;
+            case (Parser.UINT)://16b 0 to 65535
+                cursorBuffer.append("mov eax, @" + op1 + "\n");
+                cursorBuffer.append("and eax, @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dd");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
+                break;
+        }
+        return aux;
+    }
+
+    public Integer generarCodigoOr(Short tipo, String op1, String op2) throws IOException {
+        Integer aux = 0;
+        
+        switch(tipo) {
+            case (Parser.SHORT)://16b
+                cursorBuffer.append("mov ax, @" + op1 + "\n");
+                cursorBuffer.append("or ax, @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dw");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
+                break;
+            case (Parser.UINT)://16b 0 to 65535
+                cursorBuffer.append("mov eax, @" + op1 + "\n");
+                cursorBuffer.append("or eax, @" + op2 + "\n");
+                aux = obtenerVarAux(tipo, "dd");
+                cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
+        }
+        return aux;
     }
 
     public void generarCodigoComparacion(Short tipo, String op1, String op2) throws IOException {
         switch(tipo) {
             case (Parser.SHORT)://16b
-                fileWriter.write("mov ax, @" + op1 + "\n");
-                fileWriter.write("cmp ax, @" + op2 + "\n");
+                cursorBuffer.append("mov ax, @" + op1 + "\n");
+                cursorBuffer.append("cmp ax, @" + op2 + "\n");
                 break;
             case (Parser.UINT)://16b 0 to 65535
+                cursorBuffer.append("mov eax, @" + op1 + "\n");
+                cursorBuffer.append("cmp eax, @" + op2 + "\n");
+                break;
             case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
-                fileWriter.write("mov eax, @" + op1 + "\n");
-                fileWriter.write("cmp eax, @" + op2 + "\n");
+                cursorBuffer.append("fld @" + op1 + "\n");
+                cursorBuffer.append("fcomp @" + op2 + "\n");
+                // almacenar flags
+                cursorBuffer.append("fstsw ax\n");
+                cursorBuffer.append("sahf\n");
                 break;
         }
     }
@@ -265,10 +418,38 @@ public class AssemblyGenerator {
     public void generarCodigoBF(Terceto terceto) throws IOException {
         // saltar si el resultado de la comparacion anterior es falso
         // tag es el numero de terceto al que salta, buscar el tag
+        String cmp = pilaTercetos.get(terceto.getOperando1()-1).getOperador();
         String tag = terceto.getOperando2().toString();
         tag = pilaTercetos.get(Integer.parseInt(tag)-1).getOperador();
 
-        fileWriter.write("jne " + tag + "\n");
+        switch (cmp) {
+            case "!=":
+                cursorBuffer.append("je " + tag + "\n");
+                break;
+            case "==":
+                // agregar je, jpm y tagnuevo
+                cursorBuffer.append("je label" + label + "\n");
+                cursorBuffer.append("jmp " + tag + "\n");
+                cursorBuffer.append("label" + label + ":\n");
+                label++;
+                break;
+            case "<":
+                cursorBuffer.append("jg " + tag + "\n");
+                cursorBuffer.append("je " + tag + "\n");
+                break;
+            case ">":
+                cursorBuffer.append("jl " + tag + "\n");
+                cursorBuffer.append("je " + tag + "\n");
+                break;
+            case "<=":
+                cursorBuffer.append("jg " + tag + "\n");
+                break;
+            case ">=":
+                cursorBuffer.append("jl " + tag + "\n");
+                break;
+            default:
+                break;
+        }
     }
 
     public void generarCodigoBI(Terceto terceto) throws IOException {
@@ -277,6 +458,11 @@ public class AssemblyGenerator {
         String tag = terceto.getOperando1().toString();
         tag = pilaTercetos.get(Integer.parseInt(tag)-1).getOperador();
 
-        fileWriter.write("jmp " + tag + "\n");
+        cursorBuffer.append("jmp " + tag + "\n");
+    }
+
+    public void generarCodigoPrint(String op1) throws IOException {
+        // imprimir la cadena de caracteres con messagebox
+        cursorBuffer.append("invoke MessageBox, NULL, addr @" + op1 + ", addr @" + op1 + ", MB_OK\n");
     }
 }

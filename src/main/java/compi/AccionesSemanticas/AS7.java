@@ -30,6 +30,7 @@ public class AS7 implements AccionSemantica {
         Integer ptr = st.addEntry(buffer.toString(), TOKEN_CTE_FLOAT);
         st.setAttribute(ptr, "tipo", ""+TOKEN_FLOAT);
         st.setAttribute(ptr, "uso", "cte");
+        st.setAttribute(ptr, "valid","1");
         return ptr;
     }
 
