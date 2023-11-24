@@ -1,8 +1,13 @@
 {
     CLASS class1 {
-        SHORT var1,
+        CHECK SHORT var1,
         VOID fun1() {
             var1 = 1_s,
+            PRINT # ENTRA EN LA FUNCION #,
+            VOID fun2() {
+                var1 = 2_s,
+                RETURN,
+            }
             RETURN,
         }
     }
@@ -26,4 +31,11 @@
     }
     class4 cls4,
     cls4.fun1(),
+    SHORT var3,
+    cls4.var1 = var3,
+    var3 = cls4.var1,
+    VOID fun3(){
+        cls4.var1 = var3,
+        RETURN,
+    }
 }
