@@ -1,18 +1,12 @@
 {
-    CLASS cls1 {
-        FLOAT var1;var2;var3,
-        VOID met1() {
-            var1 = 6.0,
-            var2 = 3.0,
-            var3 = -30.0,
-            IF (var2 - var1 > var3) {
-                PRINT #var1 == var2#,
-            }
-            END_IF,
-            RETURN,
-        }
-    }
-    cls1 c1,
-    c1.met1(),
-    c1.var1 = 1.0,
+    SHORT var1; var2,
+    var1 = 1_s,
+    var2 = 4_s,
+    WHILE ( var1++ / 2_s !! var2 ) DO
+    {
+        PRINT # ENTRA EN EL WHILE #,
+    },
+    IF (var1 == var2)
+        PRINT # hola #,
+    END_IF,
 }

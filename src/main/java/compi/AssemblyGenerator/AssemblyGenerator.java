@@ -78,8 +78,9 @@ public class AssemblyGenerator {
                 case ""+Parser.STR_1LN:
                     dataBuffer.append("@" + key + " db \"" + st.getLexema(key) + "\", 0\n");
                     break;
-                case "identificador":
-                case "cte":
+                case ""+Parser.SHORT:
+                case ""+Parser.UINT:
+                case ""+Parser.FLOAT:
                     dataBuffer.append("@" + key + " " + size + " ");
                     if (uso.equals("cte"))
                     dataBuffer.append(st.getLexema(key) + "\n");
@@ -205,7 +206,7 @@ public class AssemblyGenerator {
             case "<=":
             case ">=":
             case "==":
-            case "!=":
+            case "!!":
                 generarCodigoComparacion(tipo, sop1, sop2);
                 break;
             default:
@@ -423,7 +424,7 @@ private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws
         tag = pilaTercetos.get(Integer.parseInt(tag)-1).getOperador();
 
         switch (cmp) {
-            case "!=":
+            case "!!":
                 cursorBuffer.append("je " + tag + "\n");
                 break;
             case "==":
