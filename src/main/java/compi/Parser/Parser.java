@@ -1113,20 +1113,13 @@ public void copiaAtributos(Integer met, Integer impl, Boolean copiaValor) {
         // self -> cls4:global:main -> cls4, global:main
         // met -> cls4.fun1:global:main -> cls4, global:main
         // result -> cls4.var1:global:main
-        //String[] self_parts = st.getLexema(met).split(":");
         String[] self_parts = st.getLexema(self).split(":");
-        // self_parts[0] puede ser c1.c2.c4.fun1 -> c1.c2.c4
-        //String[] part0 = self_parts[0].split("\\.");
-        //self_parts[0] = part0[0];
-        //for (int i = 1; i < part0.length-1; i++)
-            //self_parts[0] += "." + part0[i];
         // quitarle el ambito a at
         String at_lex = st.getLexema(Integer.parseInt(at)).split(":")[0];
         String result = self_parts[0] + "." + at_lex;
         for (int i = 1; i < self_parts.length; i++)
             result += ":" + self_parts[i];
 
-        System.out.println("copiaAtributosValor: " + result);
         Integer ptr = st.getPtr(result);
         // copiar ptr en at
         if (copiaValor)
@@ -1373,12 +1366,16 @@ Ambito ambitoActual = new Ambito("global");
 boolean check, declarandoInstancia = false;
 
 public static void main(String[] args) {
+    if (args.length != 1) {
+        System.out.println("Uso: java Parser <archivo>");
+        return;
+    }
     TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 28);
     TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 28);
     SymbolTable sttemp = new SymbolTable();
 
     FuncionesAuxiliares.loadMatrixs(mI, mA, "test.csv", sttemp, errores_lexicos);
-    Parser parser = new Parser(new LexicalAnalyzer("test4.txt", mI, mA, errores_lexicos), sttemp);
+    Parser parser = new Parser(new LexicalAnalyzer("./tests/" + args[0] + ".txt", mI, mA, errores_lexicos), sttemp);
     parser.run();
     
     Parser.imprimirErrores(errores_lexicos, "Errores Lexicos");
@@ -1393,13 +1390,12 @@ public static void main(String[] args) {
         AssemblyGenerator asm = new AssemblyGenerator(parser.pilaTercetos, parser.st, "output.asm");
         try {
             asm.generarAssembler();
+            System.out.println("Assembler generado con exito");
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
-    
-    System.out.println("Ambito actual: " + parser.ambitoActual.toString());
 }
 
 public Parser(LexicalAnalyzer lexicalAnalyzer, SymbolTable st) {
