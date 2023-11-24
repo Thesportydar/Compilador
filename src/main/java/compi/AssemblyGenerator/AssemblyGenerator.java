@@ -52,6 +52,9 @@ public class AssemblyGenerator {
         dataBuffer.append("includelib \\masm32\\lib\\kernel32.lib\n");
         dataBuffer.append("includelib \\masm32\\lib\\user32.lib\n");
         dataBuffer.append(".data\n");
+        dataBuffer.append("callStack DWORD 100 DUP(?)\n");
+        dataBuffer.append("stackPointer DWORD 0\n");
+
         volcarTablaSimbolos();
     }
     // Mapear los tipos de datos a los tamaños correspondientes
@@ -106,6 +109,11 @@ public class AssemblyGenerator {
         for (Terceto terceto : pilaTercetos)
             generarCodigoTerceto(terceto);
 
+        // genero el codigo para manejo de errores
+        checkRecursividad();
+        pushToCallStack();
+        popFromCallStack();
+        overflow();
         // volcar al fileWriter
         fileWriter.write(dataBuffer.toString());
         fileWriter.write(".code\n");
@@ -186,11 +194,17 @@ public class AssemblyGenerator {
                 break;
             case "PROC":
                 cursorBuffer = codeBuffer;
-                cursorBuffer.append(st.getLexema(op1).replaceAll(":","@") + " proc\n");
+                sop1 = st.getLexema(op1).replaceAll(":","@");
+                cursorBuffer.append(sop1 + " proc\n");
                 nesting++;
+                cursorBuffer.append("mov eax, offset" + sop1 + "\n");
+                cursorBuffer.append("call CheckCallStack\n");
+                cursorBuffer.append("call PushToCallStack\n");
                 break;
             case "RET":
+                cursorBuffer.append("call PopFromCallStack\n");
                 cursorBuffer.append("ret\n");
+                cursorBuffer.append(st.getLexema(op1).replaceAll(":", "@")+" endp\n");
                 //cursorBuffer.append(st.getLexema(op1) + " endp\n");
                 if (--nesting == 0)
                     cursorBuffer = startBuffer;
@@ -234,8 +248,7 @@ public class AssemblyGenerator {
                 // verificar overflow
                 cursorBuffer.append("fstsw ax\n");
                 cursorBuffer.append("sahf\n");
-                cursorBuffer.append("jno NoOverflowDetected\n");
-                overflow();
+                cursorBuffer.append("jo OverflowDetected\n");
                 break;
         }
         return aux;
@@ -277,16 +290,14 @@ public class AssemblyGenerator {
                 aux = obtenerVarAux(tipo, "dw");
                 cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
                 // verificar overflow
-                cursorBuffer.append("jno NoOverflowDetected\n");
-                overflow();
+                cursorBuffer.append("jo OverflowDetected\n");
                 break;
             case (Parser.UINT)://16b 0 to 65535
                 cursorBuffer.append("mov eax, @" + op1 + "\n");
                 cursorBuffer.append("mul @" + op2 + "\n"); // multiplicacion sin signo
                 aux = obtenerVarAux(tipo, "dd");
                 cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
-                cursorBuffer.append("jno NoOverflowDetected\n");
-                overflow();
+                cursorBuffer.append("jo OverflowDetected\n");
                 break;
             case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
                 cursorBuffer.append("fld @" + op1 + "\n");
@@ -412,8 +423,40 @@ private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws
     }
 
     private void overflow() throws IOException {
+        cursorBuffer.append("OverflowDetected:\n");
         cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @overflow, MB_OK\n");
         cursorBuffer.append("invoke ExitProcess, 0\n");
-        cursorBuffer.append("NoOverflowDetected:\n");
+    }
+
+    private void checkRecursividad() {
+    //; Parámetro: eax = Dirección del procedimiento a verificar
+    cursorBuffer.append("CheckCallStack PROC\n");
+    cursorBuffer.append("mov ecx, stackPointer\n");
+    cursorBuffer.append("cmp exc, 0\n");
+    cursorBuffer.append("je NoRecursion\n");
+    cursorBuffer.append("mov edx, DWORD PTR [callStack + (ecx - 1) * 4]\n"); // obtengo el ultimo elemento
+    cursorBuffer.append("cmp edx, eax\n");
+    cursorBuffer.append("je Recursion\n");
+    cursorBuffer.append("jmp NoRecursion\n");
+    cursorBuffer.append("Recursion:\n");
+    cursorBuffer.append("invoke MessageBox, NULL, addr @recursividad, addr @recursividad, MB_OK\n");
+    cursorBuffer.append("invoke ExitProcess, 0\n");
+    cursorBuffer.append("NoRecursion:\n");
+    cursorBuffer.append("ret\n");
+    }
+
+    public void pushToCallStack() {
+        cursorBuffer.append("PushToCallStack PROC\n");
+        cursorBuffer.append("mov edx, stackPointer\n");
+        cursorBuffer.append("mov DWORD PTR [callStack + edx * 4], eax\n");
+        cursorBuffer.append("inc stackPointer\n"); //TODO:verificar, esto puede fallar tranquilamente
+        cursorBuffer.append("ret\n");
+    }
+
+    public void popFromCallStack() {
+        cursorBuffer.append("PopFromCallStack PROC\n");
+        cursorBuffer.append("dec stackPointer\n"); //TODO:verificar, esto puede fallar tranquilamente
+        cursorBuffer.append("mov eax, DWORD PTR [callStack + stackPointer * 4]\n");
+        cursorBuffer.append("ret\n");
     }
 }
