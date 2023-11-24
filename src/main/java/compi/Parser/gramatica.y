@@ -259,15 +259,18 @@ imprimir             : PRINT STR_1LN             { crearTerceto("PRINT", $2.ival
 sen_control          : inicio_while condicion DO bloque_sen_ejecutable ',' { agregarEstructura("WHILE");
                                                                              crearTerceto("BI", -1, -1, "", "");
                                                                              completarB("BF", pilaTercetos.getContador()+1);
-                                                                             completarWhile(); }
+                                                                             completarWhile(); 
+                                                                             crearTerceto("END_WHILE"+countWHILE++, -1, -1, "", "");
+                                                                           }
                      | inicio_while condicion DO ','                   {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
                      ;
 
-inicio_while         : WHILE { inicio_while = pilaTercetos.getContador()+1; }
+inicio_while         : WHILE { crearTerceto("START_WHILE"+countWHILE, -1, -1, "", ""); }
                      ;
 
 clase                : class_header '{' '}'                   { ambitoActual.pop(); claseActual = null; }
                      | class_header '{' cuerpo_clase '}'      { ambitoActual.pop(); claseActual = null; }
+                     | class_header '{' cuerpo_clase herencia_clase '}'      { ambitoActual.pop(); claseActual = null; }
                      | class_header '{' herencia_clase '}'      { ambitoActual.pop(); claseActual = null; }
                      | CLASS ID ','                       { agregarClase($2.ival, "FDCLASS"); ambitoActual.pop(); claseActual = null; }
                      | class_header cuerpo_clase '}'       { agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al final de la clase");
@@ -278,7 +281,8 @@ class_header         : CLASS ID             { agregarClase($2.ival, "CLASS"); }
                      ;
 
 cuerpo_clase         : cuerpo_clase sen_declarativa
-                     | cuerpo_clase herencia_clase
+                     | cuerpo_clase herencia_clase sen_declarativa       { agregarError(errores_sintacticos, Parser.ERROR, "La declaracion de herencia debe ser la ultima sentencia de la clase");}
+                     | herencia_clase sen_declarativa       { agregarError(errores_sintacticos, Parser.ERROR, "La declaracion de herencia debe ser la ultima sentencia de la clase");}
                      | sen_declarativa
                      ;
 
@@ -408,26 +412,42 @@ public void declararVariable(Integer ptr) {
         attList += ptr.toString();
         st.setAttribute(claseActual, "attList", attList);
     }
-    if (declarandoInstancia) {
-        String attList = st.getAttribute(tipo, "attList");
-        // declrar cada uno de los atributos como lexema.attx:ambito    
-        if (attList != null) {
-            String[] atts_cls = attList.split(","); // 3,4,6,8
-            for (String att_cls: atts_cls) {
-                String att0 = st.getLexema(Integer.parseInt(att_cls)).split(":")[0]; // var1:global:class1 -> var1
-                String[] instance_parts = st.getLexema(ptr).split(":");
+    if (declarandoInstancia)
+        declararAtributos(ptr);
+}
 
-                String instance_att = instance_parts[0] + "." + att0; // c1.var1
-                for (int i = 1; i < instance_parts.length; i++)
-                    instance_att += ":" + instance_parts[i]; // c1.var1:global:main
-                
-                ptr = st.addEntry(instance_att, ID);
-                st.setAttribute(ptr, "tipo", st.getAttribute(Integer.parseInt(att_cls), "tipo"));
-                st.setAttribute(ptr, "valid", "1");
-                st.setAttribute(ptr, "uso", "identificador");
+public void declararAtributos(Integer ptr) {
+    Integer tipo = Integer.parseInt(st.getAttribute(ptr, "tipo"));
+    String attList = st.getAttribute(tipo, "attList");
+    // declrar cada uno de los atributos como lexema.attx:ambito    
+    if (attList != null) {
+        String[] atts_cls = attList.split(","); // 3,4,6,8
+        for (String att_cls: atts_cls) {
+            String att0 = st.getLexema(Integer.parseInt(att_cls)).split(":")[0]; // var1:global:class1 -> var1
+            String[] instance_parts = st.getLexema(ptr).split(":");
+
+            String instance_att = instance_parts[0] + "." + att0; // c1.var1
+            for (int i = 1; i < instance_parts.length; i++)
+                instance_att += ":" + instance_parts[i]; // c1.var1:global:main
+            
+            Integer ptr_ins = st.addEntry(instance_att, ID);
+            st.setAttribute(ptr_ins, "tipo", st.getAttribute(Integer.parseInt(att_cls), "tipo"));
+            st.setAttribute(ptr_ins, "valid", "1");
+            st.setAttribute(ptr_ins, "uso", "identificador");
+            if (st.getAttribute(Integer.parseInt(att_cls), "check_rhs") != null) {
+                st.setAttribute(ptr_ins, "check_rhs", "false");
+                st.setAttribute(ptr_ins, "check_lhs", "false");
             }
+            // si es una instancia, hay que declarar los atributos de la clase
+            if (isInstancia(ptr_ins))
+                declararAtributos(ptr_ins);
         }
     }
+}
+
+public boolean isInstancia(Integer ptr) {
+    Integer tipo = Integer.parseInt(st.getAttribute(ptr, "tipo"));
+    return lexicalAnalyzer.getReservedWord(tipo) == null;
 }
 
 public void heredar(Integer padre) {
@@ -510,13 +530,29 @@ public Integer getTipoClase(Integer id, Ambito ambito) {
 }
 
 public Integer agregarAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) {
-    ptr_lhs = obtenerAtributo(ptr_lhs, ptr_rhs, ambito);
+    ptr_lhs = obtenerAtributoInstancia(ptr_lhs, ptr_rhs, ambito);
     if (ptr_lhs == 0) {
         agregarError(errores_semanticos, Parser.ERROR,
                 String.format(ERROR_ALCANCE, st.getLexema(ptr_rhs), ambito.toString()));
         return 0;
     }
     return ptr_lhs;
+}
+
+public Integer obtenerAtributoInstancia(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) {
+    // ptr_lhs puede ser un id o un atributo_clase, eg: c1.c2:global:main, c1, var1
+    // ptr_rhs es el lexema de un id detectado por lex, eg:var1, obj2
+    if (!st.getLexema(ptr_lhs).contains("."))
+        ptr_lhs = getInstancia(ptr_lhs, ambito);
+    // c2:global:main -> c2,global,main -> c2.c1:global:main
+    if (ptr_lhs == 0) return 0; // si no lo encuentra devuelve 0
+
+    String[] lhs_parts = st.getLexema(ptr_lhs).split(":");
+    String lhs = lhs_parts[0] + "." + st.getLexema(ptr_rhs); // c2.c1
+    for (int i = 1; i < lhs_parts.length; i++)
+        lhs += ":" + lhs_parts[i]; // c2.c1:global:main
+
+    return st.getPtr(lhs);
 }
 
 public Integer obtenerAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) {
@@ -528,7 +564,6 @@ public Integer obtenerAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) 
         // si ptr_lhs es la clase no hace falta buscarla, si es una instancia de ella si
         if (ambito != null)
             ptr_lhs = getClase(ptr_lhs, ambito);
-        
         if (ptr_lhs == 0) return 0;
         // obtenemos el lexema de la clase, el cual es class1:global:main
         String clase = st.getLexema(ptr_lhs);
@@ -547,7 +582,7 @@ public Integer obtenerAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) 
     return ptr_rhs_aux;
 }
 
-private Integer getClase(Integer id, Ambito ambito) {
+private Integer getClase(Integer id, Ambito ambito, Boolean instancia) {
     // id puede ser un id o un atributo_clase, eg: c1:global:main, c1, var1
     // primero hay que detectar que ptr_lhs este al alcance
     id = st.getPtr(st.getLexema(id), ambito.copy());
@@ -575,7 +610,18 @@ private Integer getClase(Integer id, Ambito ambito) {
                 String.format(ERROR_CLASE, st.getLexema(Integer.parseInt(tipo))));
         return 0;
     }
-    return Integer.parseInt(tipo);
+    if (instancia)
+        return id;
+    else
+        return Integer.parseInt(tipo);
+}
+
+private Integer getClase(Integer id, Ambito ambito) {
+    return getClase(id, ambito, false);
+}
+
+private Integer getInstancia(Integer id, Ambito ambito) {
+    return getClase(id, ambito, true);
 }
 
 public void resolverSigno(Integer ptr_cte) {
@@ -800,20 +846,25 @@ public ParserVal crearTercetoIncrement(Integer id) {
     }
 
     agregarEstructura("Increment al identificador ", ptr);
-    ptr =  crearTerceto("=", ptr,
-            crearTerceto("+", ptr, newEntryCte(tipo), "st", "st"),
-            "st", "terceto");
-    val.ival = ptr;
+    Integer ptr_aux = crearTerceto("+", ptr, newEntryCte(tipo), "st", "st");
+    crearTerceto("=", ptr, ptr_aux, "st", "terceto");
+    val.ival = ptr_aux;
     val.dval = tipo;
     val.sval = "terceto";
     return val;
 }
 
 public Integer newEntryCte(Integer tipo) {
+    Integer ptr;
     if (tipo == FLOAT)
-        return st.addEntry("1.0", UINT);
+        ptr = st.addEntry("1.0", tipo);
     else
-        return st.addEntry("1", tipo);
+        ptr = st.addEntry("1", tipo);
+
+    st.setAttribute(ptr, "uso", "cte");
+    st.setAttribute(ptr, "valid", "1");
+    st.setAttribute(ptr, "tipo", ""+tipo);
+    return ptr;
 }
 
 public String getCmp(Integer cmpID) {
@@ -825,7 +876,7 @@ public String getCmp(Integer cmpID) {
         case 275: //EQUAL
             return "==";
         case 276: //NOT_EQUAL
-            return "!=";
+            return "!!";
         case 60: //'<'
             return "<";
         case 62: //'>'
@@ -862,16 +913,31 @@ public void completarB(String b, Integer tercetoActual) {
 }
 
 public void completarWhile() {
+    Terceto terceto;
+    PilaTercetos aux = new PilaTercetos();
     Terceto bi = pilaTercetos.pop();
-    bi.setOperando1(inicio_while, true);
+
+    while (pilaTercetos.getContador() > 0) {
+        terceto = pilaTercetos.pop();
+        if (terceto.getOperador().equals("START_WHILE"+countWHILE)) {
+            bi.setOperando1(pilaTercetos.getContador()+1, true);
+            pilaTercetos.apilar(terceto);
+            break;
+        }
+        aux.apilar(terceto);
+    }
+
+    while (aux.getContador() > 0) {
+        pilaTercetos.apilar(aux.pop());
+    }
     pilaTercetos.apilar(bi);
 }
 
 LexicalAnalyzer lexicalAnalyzer;
 SymbolTable st;
 PilaTercetos pilaTercetos;
-Integer inicio_while, tipo, claseActual;
-int countIF = 0;
+Integer tipo, claseActual;
+int countIF, countWHILE = 0;
 Ambito ambitoActual = new Ambito("global");
 boolean check, declarandoInstancia = false;
 
