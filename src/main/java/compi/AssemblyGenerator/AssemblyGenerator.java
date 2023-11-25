@@ -204,6 +204,7 @@ public class AssemblyGenerator {
             case "RET":
                 cursorBuffer.append("call PopFromCallStack\n");
                 cursorBuffer.append("ret\n");
+                cursorBuffer.append(st.getLexema(op1).replaceAll(":", "@")+" endp\n");
                 //cursorBuffer.append(st.getLexema(op1) + " endp\n");
                 if (--nesting == 0)
                     cursorBuffer = startBuffer;
