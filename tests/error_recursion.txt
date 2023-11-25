@@ -1,0 +1,17 @@
+{
+VOID factorial(SHORT n) {
+    SHORT aux,
+    IF (n <= 1_s) {
+        n = 1_s,
+    } ELSE {
+        aux = n - 1_s,
+        n = n * aux,
+    }
+    END_IF,
+    RETURN,
+}
+
+SHORT result,
+result = 5_s,
+factorial(result),
+}

@@ -1,0 +1,13 @@
+{
+SHORT var1;
+var1 = 3_s,
+IF (var1 > 0_s) {
+    PRINT #var1 es mayor que cero#,
+} ELSE {
+    PRINT #var1 es menor o igual que cero#,
+}
+WHILE (var1 > 0_s) {
+    PRINT #var1#,
+    var1 = var1 - 1_s;
+}
+}

@@ -1,0 +1,19 @@
+{
+    FLOAT var1;var2;var3,
+    var1 = 6.0,
+    var2 = 3.0,
+    var3 = -30.0,
+    IF (var1 == var2) {
+        PRINT #var1 == var2#,
+    }
+    SHORT var1; var2,
+    var1 = 1_s,
+    var2 = 4_s,
+    WHILE ( var1++ / 2_s !! var2 ) DO
+    {
+        PRINT # ENTRA EN EL WHILE #,
+    },
+    IF (var1 == var2)
+        PRINT # hola #,
+    END_IF,
+}

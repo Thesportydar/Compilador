@@ -9,8 +9,49 @@ includelib \masm32\lib\user32.lib
 .data
 callStack DWORD 100 DUP(?)
 stackPointer DWORD 0
+@2 dw ?
+@3 dw ?
+@5 dw 1
+@6 dw 1
+@8 dw 1
+@9 dw ?
+@11 dw 5
+@aux0 dw ?
+@aux1 dw ?
 .code
+factorial@global proc
+mov eax, offsetfactorial@global
+call CheckCallStack
+call PushToCallStack
+mov ax, @2
+cmp ax, @5
+jg END_IF0
+mov ax, @6
+mov @2, ax
+jmp END_IF1
+END_IF0:
+mov ax, @2
+sub ax, @8
+mov @aux0, ax
+mov ax, @aux0
+mov @3, ax
+mov ax, @2
+imul @3
+mov @aux1, ax
+jo OverflowDetected
+mov ax, @aux1
+mov @2, ax
+END_IF1:
+call PopFromCallStack
+ret
 start:
+mov ax, @11
+mov @9, ax
+mov ax, @9
+mov @2, ax
+call factorial@global
+mov ax, @2
+mov @9, ax
 CheckCallStack PROC
 mov ecx, stackPointer
 cmp exc, 0

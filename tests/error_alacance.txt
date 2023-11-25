@@ -1,0 +1,11 @@
+{
+SHORT var1,
+
+VOID func1() {
+    SHORT var2,
+    var2 = var1,
+    RETURN,
+}
+
+var2 = var1,
+}

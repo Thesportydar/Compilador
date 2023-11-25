@@ -1,0 +1,4 @@
+SHORT var1,
+FLOAT var2,
+var1 = var2,  // Error de tipos incompatibles
+var1 = CONVERT(var2),  // Conversión de tipo
