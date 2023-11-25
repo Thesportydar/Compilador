@@ -2,12 +2,8 @@
     CLASS class1 {
         CHECK SHORT var1,
         VOID fun1() {
-            var1 = 1_s,
+            var1 = var1 * 100_s,
             PRINT # ENTRA EN LA FUNCION #,
-            VOID fun2() {
-                var1 = 2_s,
-                RETURN,
-            }
             RETURN,
         }
     }
@@ -30,7 +26,11 @@
         class1,
     }
     class4 cls4,
+    cls4.var1 = 20_s,
     cls4.fun1(),
+    IF (cls4.var1 == 2000_s)
+        PRINT # ES IGUAL A 2000 #,
+    END_IF,
     SHORT var3,
     cls4.var1 = var3,
     var3 = cls4.var1,

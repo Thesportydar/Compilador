@@ -1,0 +1,17 @@
+{
+    CLASS class1 {
+        CHECK SHORT var1,
+        VOID fun1() {
+            var1 = var1 * 100_s,
+            PRINT # ENTRA EN LA FUNCION #,
+            RETURN,
+        }
+    }
+    CLASS class4 {
+        class1,
+    }
+    class4 cls4,
+    cls4.var1 = 20_s,
+    cls4.fun1(),
+    cls4.fun1(),
+}

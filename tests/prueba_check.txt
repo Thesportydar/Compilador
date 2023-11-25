@@ -12,7 +12,7 @@
         }
         cls1 c1,
         c1.main(),
-        c1.bar = c1++,
+        c1.bar = c1.bar++,
         RETURN,
     }
     main(var1),

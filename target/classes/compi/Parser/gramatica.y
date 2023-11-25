@@ -103,6 +103,8 @@ sen_ejecutable       : asignacion ','
 
 asignacion           : ID '=' exp_aritmetica                { $$.ival = crearTercetoAsignacion($1.ival, $3); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
                      | atributo_clase '=' exp_aritmetica    { $$.ival = crearTercetoAsignacion($1.ival, $3); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
+                     | ID ':' '=' exp_aritmetica                { agregarError(errores_sintacticos, Parser.ERROR, "La asignacion debe ser unicamente con el ="); }
+                     | atributo_clase ':' '=' exp_aritmetica    { agregarError(errores_sintacticos, Parser.ERROR, "La asignacion debe ser unicamente con el ="); }
                      | ID '='                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una expresión aritmética");}
                      | '=' exp_aritmetica               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un identificador");}
                      /*| ID exp_aritmetica                {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un signo igual");}*/
@@ -234,6 +236,7 @@ factor               : ID                       {   $$.ival = st.getPtr(st.getLe
                                                         }
                                                     }
                                                 }
+                     | atributo_clase INCREMENT { $$ = crearTercetoIncrement($1.ival); }
                      ;
 
 comparador           : NOT_EQUAL     { $$.ival = NOT_EQUAL; }
@@ -710,13 +713,7 @@ public void verificarRango(Integer ptr_cte) {
 }
 
 public void invocacionFuncion(Integer id, ParserVal param) {
-    Integer ptr;
-    if (!st.getLexema(id).contains(":")) // inv a funcion
-        ptr = st.getPtr(st.getLexema(id), ambitoActual.copy(), "FUNCTION");
-    else if (st.getAttribute(id, "uso").equals("FUNCTION")) // inv a metodo
-        ptr = id;
-    else // intento de inv a algo que no es una funcion o metodo
-        return;
+    Integer ptr = st.getPtr(st.getLexema(id), ambitoActual.copy(), "FUNCTION");
 
     if (ptr == 0) {
         agregarError(errores_semanticos, Parser.ERROR,
@@ -734,24 +731,17 @@ public void invocacionFuncion(Integer id, ParserVal param) {
                     String.format(ERROR_PARAMETRO, st.getLexema(ptr), param_formal));
             return;
         }
+        crearTerceto("=", Integer.parseInt(st.getAttribute(ptr, "parameter")), param.ival, "st", "st");
     }
     else if (param != null) {
         agregarError(errores_semanticos, Parser.ERROR,
                 String.format(ERROR_PARAMETRO, st.getLexema(ptr), "void"));
         return;
     }
-    //agregarEstructuraLlamados("Invocacion a la funcion ", ptr);
-    // si es un metodo hay que copiar todos los atributos
-    //if (st.getLexema(id).contains("."))
-        //copiaAtributosValor(id);
+    crearTerceto("CALL",ptr, -1,"","");
 
     if (param != null) 
-        crearTerceto("CALL",id, param.ival,"","");
-    else
-        crearTerceto("CALL",id, -1,"","");
-
-    //if (st.getLexema(id).contains("."))
-        //copiaAtributosResultado(id);
+        crearTerceto("=", param.ival, Integer.parseInt(st.getAttribute(ptr, "parameter")), "st", "st");
 }
 
 public void invocacionFuncion(Integer id) {
@@ -770,22 +760,22 @@ public void invocacionMetodo(Integer ptr, ParserVal param) {
                     String.format(ERROR_PARAMETRO, st.getLexema(ptr), param_formal));
             return;
         }
+        crearTerceto("=", Integer.parseInt(param_formal), param.ival, "st", "st");
     }
     else if (param != null) {
         agregarError(errores_semanticos, Parser.ERROR,
                 String.format(ERROR_PARAMETRO, st.getLexema(ptr), "void"));
         return;
     }
-    agregarEstructuraLlamados("Invocacion a la funcion ", ptr);
     // ptr -> cls4.fun1:global:main
     // tiene att impl==null si implementa la funcion sino impl apunta a la funcion
     Integer impl = Integer.parseInt(st.getAttribute(ptr, "impl"));
     copiaAtributos(ptr, impl, true);
 
+    crearTerceto("CALL",impl, -1,"","");
+
     if (param != null) 
-        crearTerceto("CALL",impl, param.ival,"","");
-    else
-        crearTerceto("CALL",impl, -1,"","");
+        crearTerceto("=", param.ival, Integer.parseInt(param_formal), "st", "st");
 
     copiaAtributos(ptr, impl, false);
 }
@@ -808,26 +798,19 @@ public void copiaAtributos(Integer met, Integer impl, Boolean copiaValor) {
         // self -> cls4:global:main -> cls4, global:main
         // met -> cls4.fun1:global:main -> cls4, global:main
         // result -> cls4.var1:global:main
-        //String[] self_parts = st.getLexema(met).split(":");
         String[] self_parts = st.getLexema(self).split(":");
-        // self_parts[0] puede ser c1.c2.c4.fun1 -> c1.c2.c4
-        //String[] part0 = self_parts[0].split("\\.");
-        //self_parts[0] = part0[0];
-        //for (int i = 1; i < part0.length-1; i++)
-            //self_parts[0] += "." + part0[i];
         // quitarle el ambito a at
         String at_lex = st.getLexema(Integer.parseInt(at)).split(":")[0];
         String result = self_parts[0] + "." + at_lex;
         for (int i = 1; i < self_parts.length; i++)
             result += ":" + self_parts[i];
 
-        System.out.println("copiaAtributosValor: " + result);
         Integer ptr = st.getPtr(result);
         // copiar ptr en at
         if (copiaValor)
-            crearTerceto("=", ptr, Integer.parseInt(at), "st", "st");
-        else
             crearTerceto("=", Integer.parseInt(at), ptr, "st", "st");
+        else
+            crearTerceto("=", ptr,Integer.parseInt(at), "st", "st");
     }
 }
 
@@ -935,8 +918,14 @@ public Integer crearTercetoAsignacion(Integer lhs, ParserVal rhs) {
         if (!check_lhs.equals("false")) {
             if (!check_lhs.equals(ambitoActual.toString())) { // tiene que aparecer en ambitos distintos
                 st.setAttribute(ptr, "check_lhs", "true"); // de ahora en mas ya se que aparecio en 2+ ambitos
-                if (check_rhs.equals("true")) // ya fue usada tmb del rhs
-                    agregarEstructura(String.format(ESTRUCTURA_CHECK, st.getLexema(ptr)));
+                if (check_rhs.equals("true")){
+                    agregarEstructura(String.format(ESTRUCTURA_CHECK,st.getLexema(ptr)));
+                    Integer aux = st.addEntry("CHECK "+st.getLexema(ptr)+" CUMPLIDO", STR_1LN);
+                    st.setAttribute(aux, "valid", "1");
+                    st.setAttribute(aux, "tipo", ""+STR_1LN);
+                    Terceto terceto = new Terceto("PRINT", aux, -1, false, false);
+                    pilaTercetosCHECK.apilar(terceto);
+                }
             }
         } else // si es false(primer uso del lhs) le seteo ambito actual
             st.setAttribute(ptr, "check_lhs", ambitoActual.toString());
@@ -1076,12 +1065,16 @@ Ambito ambitoActual = new Ambito("global");
 boolean check, declarandoInstancia = false;
 
 public static void main(String[] args) {
+    //if (args.length != 1) {
+    //    System.out.println("Uso: java Parser <archivo>");
+    //    return;
+    //}
     TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 28);
     TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 28);
     SymbolTable sttemp = new SymbolTable();
 
     FuncionesAuxiliares.loadMatrixs(mI, mA, "test.csv", sttemp, errores_lexicos);
-    Parser parser = new Parser(new LexicalAnalyzer("test4.txt", mI, mA, errores_lexicos), sttemp);
+    Parser parser = new Parser(new LexicalAnalyzer("./tests/" + args[0] + ".txt", mI, mA, errores_lexicos), sttemp);
     parser.run();
     
     Parser.imprimirErrores(errores_lexicos, "Errores Lexicos");
@@ -1098,13 +1091,12 @@ public static void main(String[] args) {
         AssemblyGenerator asm = new AssemblyGenerator(parser.pilaTercetos, parser.st, "output.asm");
         try {
             asm.generarAssembler();
+            System.out.println("Assembler generado con exito");
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
-    
-    System.out.println("Ambito actual: " + parser.ambitoActual.toString());
 }
 
 public Parser(LexicalAnalyzer lexicalAnalyzer, SymbolTable st) {
