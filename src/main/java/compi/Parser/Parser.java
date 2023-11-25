@@ -1015,13 +1015,7 @@ public void verificarRango(Integer ptr_cte) {
 }
 
 public void invocacionFuncion(Integer id, ParserVal param) {
-    Integer ptr;
-    if (!st.getLexema(id).contains(":")) // inv a funcion
-        ptr = st.getPtr(st.getLexema(id), ambitoActual.copy(), "FUNCTION");
-    else if (st.getAttribute(id, "uso").equals("FUNCTION")) // inv a metodo
-        ptr = id;
-    else // intento de inv a algo que no es una funcion o metodo
-        return;
+    Integer ptr = st.getPtr(st.getLexema(id), ambitoActual.copy(), "FUNCTION");
 
     if (ptr == 0) {
         agregarError(errores_semanticos, Parser.ERROR,
@@ -1039,24 +1033,17 @@ public void invocacionFuncion(Integer id, ParserVal param) {
                     String.format(ERROR_PARAMETRO, st.getLexema(ptr), param_formal));
             return;
         }
+        crearTerceto("=", Integer.parseInt(st.getAttribute(ptr, "parameter")), param.ival, "st", "st");
     }
     else if (param != null) {
         agregarError(errores_semanticos, Parser.ERROR,
                 String.format(ERROR_PARAMETRO, st.getLexema(ptr), "void"));
         return;
     }
-    //agregarEstructuraLlamados("Invocacion a la funcion ", ptr);
-    // si es un metodo hay que copiar todos los atributos
-    //if (st.getLexema(id).contains("."))
-        //copiaAtributosValor(id);
+    crearTerceto("CALL",ptr, -1,"","");
 
     if (param != null) 
-        crearTerceto("CALL",id, param.ival,"","");
-    else
-        crearTerceto("CALL",id, -1,"","");
-
-    //if (st.getLexema(id).contains("."))
-        //copiaAtributosResultado(id);
+        crearTerceto("=", param.ival, Integer.parseInt(st.getAttribute(ptr, "parameter")), "st", "st");
 }
 
 public void invocacionFuncion(Integer id) {
@@ -1075,22 +1062,22 @@ public void invocacionMetodo(Integer ptr, ParserVal param) {
                     String.format(ERROR_PARAMETRO, st.getLexema(ptr), param_formal));
             return;
         }
+        crearTerceto("=", Integer.parseInt(param_formal), param.ival, "st", "st");
     }
     else if (param != null) {
         agregarError(errores_semanticos, Parser.ERROR,
                 String.format(ERROR_PARAMETRO, st.getLexema(ptr), "void"));
         return;
     }
-    agregarEstructuraLlamados("Invocacion a la funcion ", ptr);
     // ptr -> cls4.fun1:global:main
     // tiene att impl==null si implementa la funcion sino impl apunta a la funcion
     Integer impl = Integer.parseInt(st.getAttribute(ptr, "impl"));
     copiaAtributos(ptr, impl, true);
 
+    crearTerceto("CALL",impl, -1,"","");
+
     if (param != null) 
-        crearTerceto("CALL",impl, param.ival,"","");
-    else
-        crearTerceto("CALL",impl, -1,"","");
+        crearTerceto("=", param.ival, Integer.parseInt(param_formal), "st", "st");
 
     copiaAtributos(ptr, impl, false);
 }
@@ -1366,16 +1353,16 @@ Ambito ambitoActual = new Ambito("global");
 boolean check, declarandoInstancia = false;
 
 public static void main(String[] args) {
-    if (args.length != 1) {
-        System.out.println("Uso: java Parser <archivo>");
-        return;
-    }
+    //if (args.length != 1) {
+    //    System.out.println("Uso: java Parser <archivo>");
+    //    return;
+    //}
     TransitionMatrix<Integer> mI = new TransitionMatrix<>(19, 28);
     TransitionMatrix<AccionSemantica> mA = new TransitionMatrix<>(19, 28);
     SymbolTable sttemp = new SymbolTable();
 
     FuncionesAuxiliares.loadMatrixs(mI, mA, "test.csv", sttemp, errores_lexicos);
-    Parser parser = new Parser(new LexicalAnalyzer("./tests/" + args[0] + ".txt", mI, mA, errores_lexicos), sttemp);
+    Parser parser = new Parser(new LexicalAnalyzer("./tests/" + "error_recursion" + ".txt", mI, mA, errores_lexicos), sttemp);
     parser.run();
     
     Parser.imprimirErrores(errores_lexicos, "Errores Lexicos");
