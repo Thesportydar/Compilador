@@ -3,9 +3,8 @@
     var1 = 6.0,
     var2 = 3.0,
     var3 = -30.0,
-    IF (var1 == var2) {
+    IF (var1 == var2)
         PRINT #var1 == var2#,
-    }
     SHORT var4; var5,
     var4 = 1_s,
     var5 = 4_s,
@@ -15,5 +14,4 @@
     }
     IF (var4 == var5)
         PRINT # hola #,
-    END_IF,
 }

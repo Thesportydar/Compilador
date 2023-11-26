@@ -75,8 +75,11 @@ public class LexicalAnalyzer {
                 return 44;
             }
             
-            if (currentMappedChar == 23)
+            if (currentMappedChar == 23){
+                if (isWindows)
+                    reader.read();
                 linea++;
+            }
             // accion semantica
             action = accionMatrix.get(state, mapChar(currentCharacter));
             if (action != null)

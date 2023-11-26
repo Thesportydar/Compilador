@@ -249,7 +249,6 @@ factor               : ID                       {   $$.ival = st.getPtr(st.getLe
                                                     }
                                                 }
                      | atributo_clase INCREMENT { $$ = crearTercetoIncrement($1.ival); }
-                     | error INCREMENT          { agregarError(errores_sintacticos, Parser.ERROR, "Variable o constante invalida");}
                      ;
 
 comparador           : NOT_EQUAL     { $$.ival = NOT_EQUAL; }
@@ -350,7 +349,7 @@ private static boolean errores_compilacion;
 
 void yyerror(String mensaje) {
         // funcion utilizada para imprimir errores que produce yacc
-        System.out.println("Error yacc: " + mensaje);
+        System.out.println("Error yacc: " + mensaje+ " en linea "+ (lexicalAnalyzer.getLine()-1));
 }
 
 int yylex() {
@@ -438,8 +437,7 @@ public void declararVariable(Integer ptr) {
         st.setAttribute(ptr, "check_lhs", "false");
         st.setAttribute(ptr, "check_rhs", "false");
     }
-
-    if (claseActual != null) // agregarlo a la lista de atributos de la clase}
+    if (claseActual != null) // agregarlo a la lista de atributos de la clase} 
         addAttToList(claseActual, ptr);
 
     if (declarandoInstancia)
@@ -450,8 +448,15 @@ public void addAttToList(Integer cls, Integer att) {
     String attList = st.getAttribute(cls, "attList");
     if (attList == null)
         attList = "";
-    else
+    else {
+        String[] attributeList = attList.split(",");
+        for (String atts:attributeList){
+            if (st.getLexema(Integer.parseInt(atts)).equals(st.getLexema(att))) {
+                return;
+            }
+        }
         attList += ",";
+    }
     attList += att.toString();
     st.setAttribute(cls, "attList", attList);
 }
@@ -489,6 +494,9 @@ public void declararAtributos(Integer ptr, Boolean heredando) {
                     impl_cls = att_cls;
                 st.setAttribute(ptr_ins, "impl", impl_cls);
                 st.setAttribute(ptr_ins, "self", ptr.toString());
+                String parameter = st.getAttribute(Integer.parseInt(att_cls), "parameter");
+                if (parameter != null)
+                    st.setAttribute(ptr_ins, "parameter", parameter);
             }
 
             if (st.getAttribute(Integer.parseInt(att_cls), "check_rhs") != null) {
@@ -498,7 +506,8 @@ public void declararAtributos(Integer ptr, Boolean heredando) {
             // si es una instancia, hay que declarar los atributos de la clase
             if (isInstancia(ptr_ins))
                 declararAtributos(ptr_ins);
-
+            // if ( claseActual != null)
+            //     addAttToList(claseActual, ptr_ins);
             // si esta heredando se lo agregamos a los attlist
             if (heredando)
                 addAttToList(ptr, ptr_ins);
@@ -608,7 +617,9 @@ public Integer agregarAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) 
 public Integer obtenerAtributoInstancia(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) {
     // ptr_lhs puede ser un id o un atributo_clase, eg: c1.c2:global:main, c1, var1
     // ptr_rhs es el lexema de un id detectado por lex, eg:var1, obj2
-    if (!st.getLexema(ptr_lhs).contains("."))
+    String lexema = st.getLexema(ptr_lhs);
+    if (lexema == null) return 0;
+    if (!lexema.contains("."))
         ptr_lhs = getInstancia(ptr_lhs, ambito);
     // c2:global:main -> c2,global,main -> c2.c1:global:main
     if (ptr_lhs == 0) return 0; // si no lo encuentra devuelve 0
@@ -617,8 +628,11 @@ public Integer obtenerAtributoInstancia(Integer ptr_lhs, Integer ptr_rhs, Ambito
     String lhs = lhs_parts[0] + "." + st.getLexema(ptr_rhs); // c2.c1
     for (int i = 1; i < lhs_parts.length; i++)
         lhs += ":" + lhs_parts[i]; // c2.c1:global:main
-
-    return st.getPtr(lhs);
+    Integer ptr = st.getPtr(lhs);
+    if (ptr == 0)
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ATRIBUTO, st.getLexema(ptr_lhs), st.getLexema(ptr_rhs)));
+    return ptr;
 }
 
 public Integer obtenerAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) {
@@ -773,10 +787,10 @@ public void invocacionMetodo(Integer ptr, ParserVal param) {
 
     String param_formal = st.getAttribute(ptr, "parameter");
     if (param_formal != null) {
-        param_formal = st.getAttribute(Integer.parseInt(param_formal), "tipo");
-        if (param == null || Integer.parseInt(param_formal) != (int)param.dval) {
+        String param_tipo = st.getAttribute(Integer.parseInt(param_formal), "tipo");
+        if (param == null || Integer.parseInt(param_tipo) != (int)param.dval) {
             agregarError(errores_semanticos, Parser.ERROR,
-                    String.format(ERROR_PARAMETRO, st.getLexema(ptr), param_formal));
+                    String.format(ERROR_PARAMETRO, st.getLexema(ptr), param_tipo));
             return;
         }
         crearTerceto("=", Integer.parseInt(param_formal), param.ival, "st", "st");
@@ -808,15 +822,25 @@ public void copiaAtributos(Integer met, Integer impl, Boolean copiaValor) {
     // met tiene att self = cls4:global:main
     // self tiene tipo = global:main:class4 que a su vez tiene attList
     // copiar creando tercetos los att de self a impl
+    // cls 12 self 21
     Integer self = Integer.parseInt(st.getAttribute(met, "self"));
     String[] atts = st.getAttribute(cls, "attList").split(",");
     for (String at : atts) {
         if (!st.getAttribute(Integer.parseInt(at), "uso").equals("identificador"))
             continue;
+        if (isInstancia(Integer.parseInt(at))){
+            String carry= "";
+            String[] ambito = st.getLexema(Integer.parseInt(at)).split(":");
+            for (int i = 1; i < ambito.length; i++)
+                carry += ":" + ambito[i];
+            copiaAtributosInstancia(self, Integer.parseInt(at),carry, copiaValor);
+            continue;
+        }
         // at -> var1:global:class1 -> var1
         // self -> cls4:global:main -> cls4, global:main
         // met -> cls4.fun1:global:main -> cls4, global:main
         // result -> cls4.var1:global:main
+        
         String[] self_parts = st.getLexema(self).split(":");
         // quitarle el ambito a at
         String at_lex = st.getLexema(Integer.parseInt(at)).split(":")[0];
@@ -830,6 +854,47 @@ public void copiaAtributos(Integer met, Integer impl, Boolean copiaValor) {
             crearTerceto("=", Integer.parseInt(at), ptr, "st", "st");
         else
             crearTerceto("=", ptr,Integer.parseInt(at), "st", "st");
+    }
+}
+
+public void copiaAtributosInstancia(Integer self, Integer attribute,String carry, Boolean copiaValor){
+    Integer cls = Integer.parseInt(st.getAttribute(attribute, "tipo"));
+    String[] atts = st.getAttribute(cls, "attList").split(",");
+    for (String at : atts) {
+        if (!st.getAttribute(Integer.parseInt(at), "uso").equals("identificador"))
+            continue;
+        if (isInstancia(Integer.parseInt(at))){
+            String[] ambito = carry.split(":");
+            String aux;
+            if (carry.contains("."))
+                aux = ambito[0] + st.getLexema(attribute).split(":")[0] + ".";
+            else
+                aux = st.getLexema(attribute).split(":")[0] + ".";
+            for (int i = 1; i < ambito.length; i++)
+                aux += ":" + ambito[i];
+            copiaAtributosInstancia(self, Integer.parseInt(at),aux, copiaValor);
+            continue;
+        }
+        // at -> var1:global:class1 -> var1
+        // self -> cls4:global:main -> cls4, global:main
+        // met -> cls4.fun1:global:main -> cls4, global:main
+        // result -> cls4.var1:global:main
+        String[]carry_parts = carry.split(":");
+        String at_lex = carry_parts[0]+st.getLexema(attribute).split(":")[0] +"." +st.getLexema(Integer.parseInt(at)).split(":")[0];
+        String[] self_parts = st.getLexema(self).split(":");
+        // quitarle el ambito a at
+        String result = self_parts[0] + "." + at_lex;
+        for (int i = 1; i < self_parts.length; i++)
+            result += ":" + self_parts[i];
+        for (int i = 1; i < carry_parts.length; i++)
+            at_lex += ":" + carry_parts[i];
+        Integer ptr = st.getPtr(result);
+        Integer atr = st.getPtr(at_lex);
+        // copiar ptr en at
+        if (copiaValor)
+            crearTerceto("=", atr, ptr, "st", "st");
+        else
+            crearTerceto("=", ptr,atr, "st", "st");
     }
 }
 
@@ -880,9 +945,13 @@ public Integer crearTerceto(String op, Integer lhs, Integer rhs, String tipoLhs,
 
 public String getTipo(Integer tipo) {
     String t = this.lexicalAnalyzer.getReservedWord(tipo);
-    if (t == null)
+    if (t == null){
         // es un tipo declarado, buscarlo en la st
-        t = st.getLexema(tipo).split(":")[0];
+        t = st.getLexema(tipo);
+        if (t != null)
+            t = st.getLexema(tipo).split(":")[0];
+        else t = "UNKNOWN";
+    }
     return t;
 }
 

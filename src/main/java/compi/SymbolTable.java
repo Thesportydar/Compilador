@@ -121,6 +121,7 @@ public class SymbolTable {
     }
 
     public Integer getPtr(String lexema, Ambito ambito) {
+        if (lexema == null) return 0;
         if (lexema.contains(":")) {
             Integer ptr = getPtr(lexema);
             return ptr;

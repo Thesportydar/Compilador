@@ -6,29 +6,34 @@
         SHORT var1,
         VOID fun4() {
             var1 = var1,
+            fun4(),
             RETURN,
         }
+    }
+    CLASS class3 {
+        class1 c1,
     }
     class1 c1,
     c1.var1 = c1.var1,
     c1.var1 = var1,
     CLASS class2 {
-        class1 c1,
+        class3 c3,
         VOID fun1() {
-            c1.var1 = var1,
+            c3.c1.var1 = var1,
             RETURN,
         }
         VOID fun2(SHORT par1) {
-            c1.var1 = par1,
+            c3.c1.var1 = par1,
             RETURN,
         }
     }
     class2 c2,
-    c2.c1.var1 = 10_s,
+    c2.c3.c1.var1 = 10_s,
     var1 = 9_s,
     c2.fun2(var1),
     c2.fun1(),
-    IF (c2.c1.var1 == 9_s)
+    c2.c3.c1.fun4(),
+    IF (c2.c3.c1.var1 == 9_s)
         PRINT # ES IGUAL #,
     ELSE
         PRINT # ES DISTINTO #,
@@ -38,5 +43,5 @@
         RETURN,
     }
     fun1(var3),
-    c2.c1.var1 = 1_s,
+    c2.c3.c1.var1 = 1_s,
 }

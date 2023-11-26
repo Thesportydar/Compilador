@@ -3,6 +3,7 @@
         SHORT var1,
         VOID fun1() {
             var1 = 1_s,
+            PRINT # ENTRA EN FUN1 DE CLASS1 #,
             RETURN,
         }
     }
