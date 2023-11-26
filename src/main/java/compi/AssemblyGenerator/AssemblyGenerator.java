@@ -112,8 +112,9 @@ public class AssemblyGenerator {
         // genero el codigo para manejo de errores
         startBuffer.append("invoke ExitProcess, 0\n");
         startBuffer.append("end start\n");
-        dataBuffer.append("@recursividad db \"RECURSIVIDAD\", 0\n");
-        dataBuffer.append("@overflow db \"OVERFLOW\", 0\n");
+        dataBuffer.append("@errorEjecucion db \"ERROR EJECUCION\", 0\n");
+        dataBuffer.append("@recursividad db \"RECURSIVIDAD DETECTADA\", 0\n");
+        dataBuffer.append("@overflow db \"OVERFLOW DETECTADO\", 0\n");
         cursorBuffer = codeBuffer;
         checkRecursividad();
         pushToCallStack();
@@ -253,7 +254,7 @@ public class AssemblyGenerator {
                 cursorBuffer.append("fstsw ax\n");
                 cursorBuffer.append("sahf\n");
                 cursorBuffer.append("jno NoOverflowDetected\n");
-                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @overflow, MB_OK\n");
+                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @errorEjecucion, MB_OK\n");
                 cursorBuffer.append("NoOverflowDetected:\n");
                 break;
         }
@@ -297,7 +298,7 @@ public class AssemblyGenerator {
                 cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
                 // verificar overflow
                 cursorBuffer.append("jno NoOverflowDetected\n");
-                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @overflow, MB_OK\n");
+                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @errorEjecucion, MB_OK\n");
                 cursorBuffer.append("NoOverflowDetected:\n");
                 break;
             case (Parser.UINT)://16b 0 to 65535
@@ -306,7 +307,7 @@ public class AssemblyGenerator {
                 aux = obtenerVarAux(tipo, "dd");
                 cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
                 cursorBuffer.append("jno NoOverflowDetected\n");
-                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @overflow, MB_OK\n");
+                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @errorEjecucion, MB_OK\n");
                 cursorBuffer.append("NoOverflowDetected:\n");
                 break;
             case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
@@ -443,7 +444,7 @@ private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws
     cursorBuffer.append("je Recursion\n");
     cursorBuffer.append("jmp NoRecursion\n");
     cursorBuffer.append("Recursion:\n");
-    cursorBuffer.append("invoke MessageBox, NULL, addr @recursividad, addr @recursividad, MB_OK\n");
+    cursorBuffer.append("invoke MessageBox, NULL, addr @recursividad, addr @errorEjecucion, MB_OK\n");
     cursorBuffer.append("invoke ExitProcess, 0\n");
     cursorBuffer.append("NoRecursion:\n");
     cursorBuffer.append("ret\n");

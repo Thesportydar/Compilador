@@ -247,7 +247,6 @@ factor               : ID                       {   $$.ival = st.getPtr(st.getLe
                                                     }
                                                 }
                      | atributo_clase INCREMENT { $$ = crearTercetoIncrement($1.ival); }
-                     | error INCREMENT          { agregarError(errores_sintacticos, Parser.ERROR, "Variable o constante invalida");}
                      ;
 
 comparador           : NOT_EQUAL     { $$.ival = NOT_EQUAL; }
@@ -345,7 +344,7 @@ private static boolean errores_compilacion;
 
 void yyerror(String mensaje) {
         // funcion utilizada para imprimir errores que produce yacc
-        System.out.println("Error yacc: " + mensaje);
+        System.out.println("Error yacc: " + mensaje+ " en linea "+ (lexicalAnalyzer.getLine()-1));
 }
 
 int yylex() {
@@ -409,7 +408,6 @@ public void declararVariable(Integer ptr) {
         st.setAttribute(ptr, "check_lhs", "false");
         st.setAttribute(ptr, "check_rhs", "false");
     }
-
     if (claseActual != null) // agregarlo a la lista de atributos de la clase} 
         addAttToList(claseActual, ptr);
 
@@ -421,8 +419,15 @@ public void addAttToList(Integer cls, Integer att) {
     String attList = st.getAttribute(cls, "attList");
     if (attList == null)
         attList = "";
-    else
+    else {
+        String[] attributeList = attList.split(",");
+        for (String atts:attributeList){
+            if (st.getLexema(Integer.parseInt(atts)).equals(st.getLexema(att))) {
+                return;
+            }
+        }
         attList += ",";
+    }
     attList += att.toString();
     st.setAttribute(cls, "attList", attList);
 }
@@ -472,7 +477,8 @@ public void declararAtributos(Integer ptr, Boolean heredando) {
             // si es una instancia, hay que declarar los atributos de la clase
             if (isInstancia(ptr_ins))
                 declararAtributos(ptr_ins);
-
+            // if ( claseActual != null)
+            //     addAttToList(claseActual, ptr_ins);
             // si esta heredando se lo agregamos a los attlist
             if (heredando)
                 addAttToList(ptr, ptr_ins);
@@ -591,8 +597,11 @@ public Integer obtenerAtributoInstancia(Integer ptr_lhs, Integer ptr_rhs, Ambito
     String lhs = lhs_parts[0] + "." + st.getLexema(ptr_rhs); // c2.c1
     for (int i = 1; i < lhs_parts.length; i++)
         lhs += ":" + lhs_parts[i]; // c2.c1:global:main
-
-    return st.getPtr(lhs);
+    Integer ptr = st.getPtr(lhs);
+    if (ptr == 0)
+        agregarError(errores_semanticos, Parser.ERROR,
+                String.format(ERROR_ATRIBUTO, st.getLexema(ptr_lhs), st.getLexema(ptr_rhs)));
+    return ptr;
 }
 
 public Integer obtenerAtributo(Integer ptr_lhs, Integer ptr_rhs, Ambito ambito) {
@@ -827,9 +836,9 @@ public void copiaAtributosInstancia(Integer self, Integer attribute,String carry
             String[] ambito = carry.split(":");
             String aux;
             if (carry.contains("."))
-                aux = ambito[0] + st.getLexema(Integer.parseInt(at)).split(":")[0] + ".";
+                aux = ambito[0] + st.getLexema(attribute).split(":")[0] + ".";
             else
-                aux = st.getLexema(Integer.parseInt(at)).split(":")[0] + ".";
+                aux = st.getLexema(attribute).split(":")[0] + ".";
             for (int i = 1; i < ambito.length; i++)
                 aux += ":" + ambito[i];
             copiaAtributosInstancia(self, Integer.parseInt(at),aux, copiaValor);
@@ -848,7 +857,6 @@ public void copiaAtributosInstancia(Integer self, Integer attribute,String carry
             result += ":" + self_parts[i];
         for (int i = 1; i < carry_parts.length; i++)
             at_lex += ":" + carry_parts[i];
-        System.out.println("Result: "+ result + " At_lex: "+ at_lex);
         Integer ptr = st.getPtr(result);
         Integer atr = st.getPtr(at_lex);
         // copiar ptr en at
@@ -906,9 +914,13 @@ public Integer crearTerceto(String op, Integer lhs, Integer rhs, String tipoLhs,
 
 public String getTipo(Integer tipo) {
     String t = this.lexicalAnalyzer.getReservedWord(tipo);
-    if (t == null)
+    if (t == null){
         // es un tipo declarado, buscarlo en la st
-        t = st.getLexema(tipo).split(":")[0];
+        t = st.getLexema(tipo);
+        if (t != null)
+            t = st.getLexema(tipo).split(":")[0];
+        else t = "UNKNOWN";
+    }
     return t;
 }
 
