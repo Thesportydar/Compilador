@@ -27,16 +27,21 @@ sentencias           : sentencias sen_declarativa
                      | sentencias sen_ejecutable
                      | sentencias sen_control
                      | sen_ejecutable
-                     | sen_control
                      | sen_declarativa
+                     | sen_control
                      | error ','                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una sentencia ejecutable");}
                      ;
 
 sen_declarativa      : tipo list_var ',' { if (declarandoInstancia) declarandoInstancia = false; }
                      | sentencia_check tipo list_var ',' { check=false; if (declarandoInstancia) declarandoInstancia = false; }
-                     | tipo list_var             {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
                      | funcion
                      | clase
+                     | clase ','                           {agregarError(errores_sintacticos, Parser.ERROR, "Las clases no se declaran con ,");}
+                     | clase ';'                           {agregarError(errores_sintacticos, Parser.ERROR, "Las clases no se declaran con ;");}
+                     | funcion ','                           {agregarError(errores_sintacticos, Parser.ERROR, "Las funciones no se declaran con ,");}
+                     | funcion ';'                           {agregarError(errores_sintacticos, Parser.ERROR, "Las funciones no se declaran con ;");}
+                     | sentencia_check tipo list_var     {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | tipo list_var                     {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
                      ;
 
 sentencia_check      : CHECK { check=true; }
@@ -46,6 +51,7 @@ tipo                 : SHORT { $$.ival = SHORT; tipo = (int)SHORT; }
                      | UINT  { $$.ival = UINT; tipo = (int)UINT; }
                      | FLOAT { $$.ival = FLOAT; tipo = (int)FLOAT; }
                      | ID    { $$.ival = getTipoClase($1.ival, ambitoActual.copy()); tipo = $$.ival; declarandoInstancia = true; }
+                     | error { agregarError(errores_sintacticos, Parser.ERROR, "El tipo ingresado no es valido");}
                      ;
 
 CTE                  : CTE_SHORT     {verificarRango($1.ival); $$.ival = $1.ival; $$.dval = SHORT;}
@@ -53,7 +59,8 @@ CTE                  : CTE_SHORT     {verificarRango($1.ival); $$.ival = $1.ival
                      | CTE_FLOAT     {verificarRango($1.ival); $$.ival = $1.ival; $$.dval = FLOAT;}
                      | '-' CTE_SHORT {resolverSigno($2.ival); verificarRango($2.ival); $$.ival = $2.ival; $$.dval = SHORT; }
                      | '-' CTE_FLOAT {resolverSigno($2.ival); verificarRango($2.ival); $$.ival = $2.ival; $$.dval = FLOAT; }
-                     | '-' CTE_UINT { agregarError(errores_sintacticos, Parser.ERROR, "No se puede negar un unsigned int");}
+                     | '-' CTE_UINT  { agregarError(errores_sintacticos, Parser.ERROR, "No se puede negar un unsigned int");}
+                     | error         { agregarError(errores_sintacticos, Parser.ERROR, "La constante ingresada no es valida"); }
                      ;
 
 list_var             : list_var ';' ID { declararVariable($3.ival); }
@@ -62,6 +69,7 @@ list_var             : list_var ';' ID { declararVariable($3.ival); }
 
 funcion              : header_funcion '{' cuerpo_funcion sen_retorno '}' { ambitoActual.pop(); crearTerceto("RET", $1.ival, -1, null, null); }
                      | header_funcion '{' cuerpo_funcion seleccion_func '}' { ambitoActual.pop(); crearTerceto("RET", $1.ival, -1, null, null); }
+                     | header_funcion '{' cuerpo_funcion '}' { agregarError(errores_sintacticos, Parser.ERROR, "La funcion debe contener la sentencia RETURN,"); }
                      | header_funcion cuerpo_funcion '}' {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una llave al comienzo de la función");}
                      ;
 
@@ -95,34 +103,38 @@ sen_retorno          : RETURN ','
 
                      // deberian ir sentencias declarativas
 sen_ejecutable       : asignacion ','
+                     | inv_metodo ','
                      | inv_funcion ','
                      | seleccion ','
                      | imprimir ','
-                     | inv_metodo ','
+                     | asignacion ';'   {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | inv_metodo ';'   {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | inv_funcion ';'  {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | seleccion ';'    {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | imprimir ';'     {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | inv_metodo       {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | asignacion       {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | inv_funcion      {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | seleccion        {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
+                     | imprimir         {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una ,");}
                      ;
 
-asignacion           : ID '=' exp_aritmetica                { $$.ival = crearTercetoAsignacion($1.ival, $3); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
-                     | atributo_clase '=' exp_aritmetica    { $$.ival = crearTercetoAsignacion($1.ival, $3); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
+asignacion           : ID '=' exp_aritmetica               { $$.ival = crearTercetoAsignacion($1.ival, $3); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
+                     | atributo_clase '=' exp_aritmetica   { $$.ival = crearTercetoAsignacion($1.ival, $3); $$.sval = "terceto"; if ($$.ival != 0) $$.dval = $1.dval; }
                      | ID ':' '=' exp_aritmetica                { agregarError(errores_sintacticos, Parser.ERROR, "La asignacion debe ser unicamente con el ="); }
                      | atributo_clase ':' '=' exp_aritmetica    { agregarError(errores_sintacticos, Parser.ERROR, "La asignacion debe ser unicamente con el ="); }
-                     | ID '='                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una expresión aritmética");}
                      | '=' exp_aritmetica               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un identificador");}
-                     /*| ID exp_aritmetica                {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un signo igual");}*/
-                     | atributo_clase '='               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una expresión aritmética");}
                      | atributo_clase exp_aritmetica    {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un signo igual");}
                      ;
 
 inv_funcion          : ID '(' exp_aritmetica ')'        { invocacionFuncion($1.ival, $3); }
                      | ID '(' ')'                       { invocacionFuncion($1.ival); }
                      | ID '(' exp_aritmetica            {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
-                     /*| ID exp_aritmetica ')'            {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}*/
                      | ID ')'                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
-                     | ID '('                           {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;
 
 inv_metodo           : atributo_clase '(' exp_aritmetica ')'{ if ($1.ival != 0) invocacionMetodo($1.ival, $3); }
                      | atributo_clase '(' ')'               { if ($1.ival != 0) invocacionMetodo($1.ival); }
-                     | atributo_clase '('               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      | atributo_clase ')'               {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba el cierre entre parentesis al final de la invocacion");}
                      ;
 
@@ -237,6 +249,7 @@ factor               : ID                       {   $$.ival = st.getPtr(st.getLe
                                                     }
                                                 }
                      | atributo_clase INCREMENT { $$ = crearTercetoIncrement($1.ival); }
+                     | error INCREMENT          { agregarError(errores_sintacticos, Parser.ERROR, "Variable o constante invalida");}
                      ;
 
 comparador           : NOT_EQUAL     { $$.ival = NOT_EQUAL; }
@@ -245,6 +258,8 @@ comparador           : NOT_EQUAL     { $$.ival = NOT_EQUAL; }
                      | LESS_EQUAL    { $$.ival = LESS_EQUAL; }
                      | '<'           { $$.ival = 60; }
                      | '>'           { $$.ival = 62; }
+                     | '='           { $$.ival = EQUAL;
+                                        agregarError(errores_sintacticos, Parser.ERROR, "Error en el comparador igual, se esperaba ==");}
                      ;
 
                      // una sola sentencia ejecutable o varias encerradas por llave
@@ -257,10 +272,8 @@ bloque_sen_ejecutable: sen_ejecutable
 
 bloque_ejecutable_func: sen_retorno
                       | '{' sen_ejecutable_r sen_retorno '}'
-                      | ',' 
                       ;
 
-                     // conjunto sentencias ejecutable
 sen_ejecutable_r     : sen_ejecutable_r sen_ejecutable
                      | sen_ejecutable
                      ;
@@ -270,13 +283,19 @@ imprimir             : PRINT STR_1LN             { crearTerceto("PRINT", $2.ival
                      | PRINT ','                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una cadena para imprimir");}
                      ;
 
-sen_control          : inicio_while condicion DO bloque_sen_ejecutable ',' { agregarEstructura("WHILE");
-                                                                             crearTerceto("BI", -1, -1, "", "");
-                                                                             completarB("BF", pilaTercetos.getContador()+1);
-                                                                             completarWhile(); 
-                                                                             crearTerceto("END_WHILE"+countWHILE++, -1, -1, "", "");
-                                                                           }
-                     | inicio_while condicion DO ','                   {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
+sen_control          : inicio_while condicion DO '{' sen_ejecutable_r '}'   {   agregarEstructura("WHILE");
+                                                                                crearTerceto("BI", -1, -1, "", "");
+                                                                                completarB("BF", pilaTercetos.getContador()+1);
+                                                                                completarWhile(); 
+                                                                                crearTerceto("END_WHILE"+countWHILE++, -1, -1, "", "");
+                                                                            }
+                     | inicio_while condicion DO sen_ejecutable             {   agregarEstructura("WHILE");
+                                                                                crearTerceto("BI", -1, -1, "", "");
+                                                                                completarB("BF", pilaTercetos.getContador()+1);
+                                                                                completarWhile(); 
+                                                                                crearTerceto("END_WHILE"+countWHILE++, -1, -1, "", "");
+                                                                            }
+                     | inicio_while condicion DO '{' '}'                           {  agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una o mas sentencias ejecutables"); }
                      ;
 
 inicio_while         : WHILE { crearTerceto("START_WHILE"+countWHILE, -1, -1, "", ""); }

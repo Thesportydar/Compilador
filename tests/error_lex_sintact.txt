@@ -1,7 +1,7 @@
 {
 SHORT var1,
 FLOAT var2,
-var1 = var2.,
+var1 = var2,
 
 VOID func1() {
     SHORT var1,

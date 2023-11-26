@@ -95,7 +95,7 @@ public class LexicalAnalyzer {
                     ptrActual = 0;
                 else {
                     String error = errores.remove(errores.size() -1);
-                    errores.add("(Linea " + getLine() + "):" + error);
+                    errores.add("Error (Linea " + getLine() + "): " + error);
                     ptrActual = -1;
                 } 
 
@@ -114,8 +114,13 @@ public class LexicalAnalyzer {
     }
 
     private int returnToken(int nextState, StringBuffer lexema) {
-        if (nextState == TOKEN_RESERVED_WORD)
-            return RESERVED_WORDS.get(lexema.toString());
+        if (nextState == TOKEN_RESERVED_WORD){
+            try {
+                return RESERVED_WORDS.get(lexema.toString());
+            } catch (NullPointerException e) {
+                return 256;
+            }
+        }
         else if (nextState < TOKEN_RESERVED_WORD-1)
             return nextState - 100;
         else
