@@ -64,8 +64,10 @@ public class LexicalAnalyzer {
         while(currentChar != -1) {
             char currentCharacter = (char) currentChar;
             currentMappedChar = mapChar(currentCharacter);
-            // nuevo estado
-            nextState = stateMatrix.get(state, currentMappedChar);
+            if (currentMappedChar != -1)
+                nextState = stateMatrix.get(state, currentMappedChar);
+            else
+                nextState = null;
 
             if (nextState == null) {
                 errores.add("(Linea " + getLine() + "):" + "Panic mode. Leyendo hasta el caracter de sincronizacion\n\tCaracter:" + currentCharacter + "\n\tLexema:" + lexema.toString());
@@ -113,7 +115,11 @@ public class LexicalAnalyzer {
     }
 
     private int mapChar(char character) {
-        return charMap.get(character);
+        try {
+            return charMap.get(character);
+        } catch (NullPointerException e){
+            return -1;
+        }
     }
 
     private int returnToken(int nextState, StringBuffer lexema) {

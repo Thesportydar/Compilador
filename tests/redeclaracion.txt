@@ -1,15 +1,15 @@
 {
 SHORT var1,
-SHORT var1;  // Error de redeclaración
+SHORT var1,  ** Error de redeclaracion
 
 VOID func1() {
-    SHORT var2;
-    SHORT var2;  // Error de redeclaración
+    SHORT var2,
+    SHORT var2,  ** Error de redeclaracion
     RETURN,
 }
 
-VOID func1() { // Error de redeclaración
-    SHORT var3;
+VOID func1() { ** Error de redeclaracion
+    SHORT var3,
     RETURN,
 }
 }

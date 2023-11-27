@@ -142,16 +142,14 @@ atributo_clase       : ID '.' ID                        { $$.ival = agregarAtrib
                      | atributo_clase '.' ID             { $$.ival = agregarAtributo($1.ival, $3.ival, ambitoActual.copy()); }
                      ;
 
-seleccion_func       : IF condicion bloque_ejecutable_func ELSE bloque_ejecutable_func END_IF ',' {agregarEstructura("IF");}
-                     | IF condicion bloque_ejecutable_func END_IF ',' {agregarEstructura("IF");}
+seleccion_func       : IF condicion bloque_ejecutable_func ELSE bloque_ejecutable_func END_IF ','
+                     | IF condicion bloque_ejecutable_func END_IF ','
                      | IF condicion ELSE bloque_ejecutable_func END_IF {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
                      | IF condicion bloque_ejecutable_func ELSE END_IF {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba un bloque de sentencias ejecutables");}
                      ;
 
-seleccion            : IF condicion cuerpo_then END_IF { agregarEstructura("IF");
-                                                         completarB("BI", pilaTercetos.getContador()); }
-                     | IF condicion cuerpo_then ELSE cuerpo_else END_IF { agregarEstructura("IF"); 
-                                                                          completarB("BI", pilaTercetos.getContador()+1);
+seleccion            : IF condicion cuerpo_then END_IF { completarB("BI", pilaTercetos.getContador()); }
+                     | IF condicion cuerpo_then ELSE cuerpo_else END_IF { completarB("BI", pilaTercetos.getContador()+1);
                                                                           crearTerceto("END_IF"+countIF++, -1, -1, "", ""); }
                      ;
 
@@ -216,7 +214,7 @@ factor               : ID                       {   $$.ival = st.getPtr(st.getLe
                                                     if (check_rhs != null && check_rhs.equals("false")){
                                                         st.setAttribute($$.ival, "check_rhs", "true");
                                                         if (check_lhs.equals("true")){
-                                                            agregarEstructura(String.format(ESTRUCTURA_CHECK,st.getLexema($$.ival)));
+                                                            System.out.println("LOG: " + String.format(ESTRUCTURA_CHECK,st.getLexema($$.ival)));
                                                             Integer aux = st.addEntry("CHECK "+st.getLexema($$.ival)+" CUMPLIDO", STR_1LN);
                                                             st.setAttribute(aux, "valid", "1");
                                                             st.setAttribute(aux, "tipo", ""+STR_1LN);
@@ -238,7 +236,7 @@ factor               : ID                       {   $$.ival = st.getPtr(st.getLe
                                                         if (check_rhs != null && check_rhs.equals("false")){
                                                             st.setAttribute($$.ival, "check_rhs", "true");
                                                             if (check_lhs.equals("true")){
-                                                                agregarEstructura(String.format(ESTRUCTURA_CHECK,st.getLexema($$.ival)));
+                                                                System.out.println("LOG: " + String.format(ESTRUCTURA_CHECK,st.getLexema($$.ival)));
                                                                 Integer aux = st.addEntry("CHECK "+st.getLexema($$.ival)+" CUMPLIDO", STR_1LN);
                                                                 st.setAttribute(aux, "valid", "1");
                                                                 st.setAttribute(aux, "tipo", ""+STR_1LN);
@@ -282,14 +280,12 @@ imprimir             : PRINT STR_1LN             { crearTerceto("PRINT", $2.ival
                      | PRINT ','                 {agregarError(errores_sintacticos, Parser.ERROR, "Se esperaba una cadena para imprimir");}
                      ;
 
-sen_control          : inicio_while condicion DO '{' sen_ejecutable_r '}'   {   agregarEstructura("WHILE");
-                                                                                crearTerceto("BI", -1, -1, "", "");
+sen_control          : inicio_while condicion DO '{' sen_ejecutable_r '}'   {   crearTerceto("BI", -1, -1, "", "");
                                                                                 completarB("BF", pilaTercetos.getContador()+1);
                                                                                 completarWhile(); 
                                                                                 crearTerceto("END_WHILE"+countWHILE++, -1, -1, "", "");
                                                                             }
-                     | inicio_while condicion DO sen_ejecutable             {   agregarEstructura("WHILE");
-                                                                                crearTerceto("BI", -1, -1, "", "");
+                     | inicio_while condicion DO sen_ejecutable             {   crearTerceto("BI", -1, -1, "", "");
                                                                                 completarB("BF", pilaTercetos.getContador()+1);
                                                                                 completarWhile(); 
                                                                                 crearTerceto("END_WHILE"+countWHILE++, -1, -1, "", "");
@@ -329,7 +325,6 @@ public static final List<String> errores_sintacticos = new ArrayList<>();
 public static final List<String> errores_semanticos = new ArrayList<>();
 public static final List<String> estructuras = new ArrayList<>();
 public static final float FLOAT_MIN = 1.17549435E-38f;
-private Stack<Integer> pilaLineas = new Stack<>();
 
 private static String ERROR_ALCANCE = "El identificador %s no esta al alcance del ambito %s";
 private static String ERROR_ATRIBUTO = "El identificador %s no tiene un atributo %s";
@@ -356,10 +351,6 @@ int yylex() {
     try {
         int token = lexicalAnalyzer.nextToken();
         yylval = new ParserVal(lexicalAnalyzer.getPtrActual());
-
-        if (token == IF || token == PRINT || token == WHILE || token == CLASS || token == 61 || token == VOID) {
-            pilaLineas.push(lexicalAnalyzer.getLine());
-        }
 
         return token;
     } catch (IOException e) {
@@ -389,26 +380,6 @@ public static void imprimirErrores(List<String> errores, String cabecera) {
                 }
                 
         }
-}
-
-private Integer getLinea(){
-    if (!(pilaLineas.isEmpty())) {
-      return pilaLineas.pop();
-    } else {
-      return -1;
-    }
-}
-
-public void agregarEstructuraLlamados(String s, Integer ptr) {
-    estructuras.add("Linea(" + lexicalAnalyzer.getLine() + "): " + s + st.getLexema(ptr));
-}
-
-public void agregarEstructura(String s) {
-    estructuras.add("Linea(" + getLinea().toString() + "): " + s);
-}
-
-public void agregarEstructura(String s, Integer ptr) {
-    estructuras.add("Linea(" + getLinea().toString() + "): " + s + st.getLexema(ptr));
 }
 
 public void declararVariable(Integer ptr) {
@@ -568,13 +539,11 @@ public void agregarClase(Integer id, String desc) {
     st.setAttribute(id, "valid", "1");// TODO: CAMBIAR
     ambitoActual.push(st.getLexema(id).split(":")[0]);
     claseActual = id;
-    agregarEstructura(desc +" : " + st.getLexema(id));
-
     // si implementa una FDCLASS, borramos esta entrada
     if (desc.equals("CLASS")) {
         ptr = st.getPtr(st.getLexema(id), "FDCLASS");
         if (ptr != 0) {
-            agregarEstructura("Implementacion de FDCLASS: " + st.getLexema(id));
+            //agregarEstructura("Implementacion de FDCLASS: " + st.getLexema(id));
             st.delEntry(ptr);
         }
     }
@@ -1007,7 +976,7 @@ public Integer crearTercetoAsignacion(Integer lhs, ParserVal rhs) {
             if (!check_lhs.equals(ambitoActual.toString())) { // tiene que aparecer en ambitos distintos
                 st.setAttribute(ptr, "check_lhs", "true"); // de ahora en mas ya se que aparecio en 2+ ambitos
                 if (check_rhs.equals("true")){
-                    agregarEstructura(String.format(ESTRUCTURA_CHECK,st.getLexema(ptr)));
+                    System.out.println("LOG: " + String.format(ESTRUCTURA_CHECK,st.getLexema(ptr)));
                     Integer aux = st.addEntry("CHECK "+st.getLexema(ptr)+" CUMPLIDO", STR_1LN);
                     st.setAttribute(aux, "valid", "1");
                     st.setAttribute(aux, "tipo", ""+STR_1LN);
@@ -1018,7 +987,6 @@ public Integer crearTercetoAsignacion(Integer lhs, ParserVal rhs) {
         } else // si es false(primer uso del lhs) le seteo ambito actual
             st.setAttribute(ptr, "check_lhs", ambitoActual.toString());
     }
-    agregarEstructura("Asignacion al identificador ", ptr);
     return crearTerceto("=", ptr, rhs.ival, "st", rhs.sval);
 } 
 
@@ -1047,7 +1015,7 @@ public ParserVal crearTercetoIncrement(Integer id) {
     if (check_lhs != null && check_rhs.equals("false")){
       st.setAttribute(id, "check_rhs", "true");
       if (check_lhs.equals("true")){
-        agregarEstructura(String.format(ESTRUCTURA_CHECK,st.getLexema(id)));
+        System.out.println("LOG: " + String.format(ESTRUCTURA_CHECK,st.getLexema(id)));
         Integer aux = st.addEntry("CHECK "+st.getLexema(id)+" CUMPLIDO", STR_1LN);
         st.setAttribute(aux, "valid", "1");
         st.setAttribute(aux, "tipo", ""+STR_1LN);
@@ -1056,7 +1024,6 @@ public ParserVal crearTercetoIncrement(Integer id) {
       }
     }
 
-    agregarEstructura("Increment al identificador ", ptr);
     Integer ptr_aux = crearTerceto("+", ptr, newEntryCte(tipo), "st", "st");
     crearTerceto("=", ptr, ptr_aux, "st", "terceto");
     val.ival = ptr_aux;

@@ -3,7 +3,7 @@ import compi.SymbolTable;
 import java.util.List;
 
 public class AS7 implements AccionSemantica {
-    final float RANGE = 3.4028235E38f;
+    final float RANGE = 3.40282347E+38f;
     static final int TOKEN_CTE_FLOAT = 271;
     static final int TOKEN_FLOAT = 268;
     private List<String> errores;

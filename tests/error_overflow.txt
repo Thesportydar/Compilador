@@ -12,6 +12,6 @@
     }
     class4 cls4,
     cls4.var1 = 20_s,
-    cls4.fun1(),
+    cls4.fun1(),                                                    
     cls4.fun1(),
 }

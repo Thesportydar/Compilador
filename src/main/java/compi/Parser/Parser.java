@@ -850,7 +850,7 @@ private static boolean errores_compilacion;
 
 void yyerror(String mensaje) {
         // funcion utilizada para imprimir errores que produce yacc
-        System.out.println("Error yacc: " + mensaje+ " en linea "+ (lexicalAnalyzer.getLine()-1));
+        System.out.println("Error yacc: " + mensaje+ " en linea "+ (lexicalAnalyzer.getLine()));
 }
 
 int yylex() {

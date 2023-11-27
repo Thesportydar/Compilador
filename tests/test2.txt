@@ -5,7 +5,7 @@
     WHILE ( var1++ / 2_s !! var2 ) DO
     {
         PRINT # ENTRA EN EL WHILE #,
-    },
+    }
     IF (var1 == var2)
         PRINT # hola #,
     END_IF,

@@ -2,6 +2,9 @@ package compi.AssemblyGenerator;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,7 @@ public class AssemblyGenerator {
     private int contadorAux = 0;
     private int label = 0;
     private int nesting = 0;
+    private DecimalFormat decimalFormat = new DecimalFormat("0.##########");
 
     public AssemblyGenerator(PilaTercetos pilaTercetos, SymbolTable st, String filePath) {
         this.pilaTercetos = pilaTercetos;
@@ -63,7 +67,7 @@ public class AssemblyGenerator {
     static {
         tipoToSize.put("" + Parser.SHORT, "dw");
         tipoToSize.put("" + Parser.UINT, "dd");
-        tipoToSize.put("" + Parser.FLOAT, "dd");
+        tipoToSize.put("" + Parser.FLOAT, "REAL4");
     }
     
     private void volcarTablaSimbolos() throws IOException {
@@ -83,10 +87,20 @@ public class AssemblyGenerator {
                     break;
                 case ""+Parser.SHORT:
                 case ""+Parser.UINT:
-                case ""+Parser.FLOAT:
                     dataBuffer.append("@" + key + " " + size + " ");
                     if (uso.equals("cte"))
-                    dataBuffer.append(st.getLexema(key) + "\n");
+                        dataBuffer.append(st.getLexema(key) + "\n");
+                    else
+                        dataBuffer.append("?\n");
+                    break;
+                case ""+Parser.FLOAT:
+                    dataBuffer.append("@" + key + " " + size + " ");
+                    if (uso.equals("cte")){
+                        Double scientificDouble = Double.parseDouble(st.getLexema(key));
+                        NumberFormat nf = new DecimalFormat("################################################.###########################################");
+                        String decimalString = nf.format(scientificDouble);
+                        dataBuffer.append(decimalString + ".0\n");
+                    }
                     else
                         dataBuffer.append("?\n");
                     break;
@@ -253,9 +267,10 @@ public class AssemblyGenerator {
                 // verificar overflow
                 cursorBuffer.append("fstsw ax\n");
                 cursorBuffer.append("sahf\n");
-                cursorBuffer.append("jno NoOverflowDetected\n");
+                cursorBuffer.append("jno NoOverflowDetected"+label+"\n");
                 cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @errorEjecucion, MB_OK\n");
-                cursorBuffer.append("NoOverflowDetected:\n");
+                cursorBuffer.append("NoOverflowDetected"+label+++":\n");
+                
                 break;
         }
         return aux;
@@ -294,21 +309,23 @@ public class AssemblyGenerator {
             case (Parser.SHORT)://16b con signo
                 cursorBuffer.append("mov ax, @" + op1 + "\n");
                 cursorBuffer.append("imul @" + op2 + "\n"); // multiplicacion con signo
+                cursorBuffer.append("jno NoOverflowDetected"+label+"\n");
+                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @errorEjecucion, MB_OK\n");
+                cursorBuffer.append("NoOverflowDetected"+label+++":\n");
                 aux = obtenerVarAux(tipo, "dw");
                 cursorBuffer.append("mov @aux" + aux.toString() + ", ax\n");
                 // verificar overflow
-                cursorBuffer.append("jno NoOverflowDetected\n");
-                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @errorEjecucion, MB_OK\n");
-                cursorBuffer.append("NoOverflowDetected:\n");
+                
                 break;
             case (Parser.UINT)://16b 0 to 65535
                 cursorBuffer.append("mov eax, @" + op1 + "\n");
                 cursorBuffer.append("mul @" + op2 + "\n"); // multiplicacion sin signo
+                cursorBuffer.append("jno NoOverflowDetected"+label+"\n");
+                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @errorEjecucion, MB_OK\n");
+                cursorBuffer.append("NoOverflowDetected"+label+++":\n");
                 aux = obtenerVarAux(tipo, "dd");
                 cursorBuffer.append("mov @aux" + aux.toString() + ", eax\n");
-                cursorBuffer.append("jno NoOverflowDetected\n");
-                cursorBuffer.append("invoke MessageBox, NULL, addr @overflow, addr @errorEjecucion, MB_OK\n");
-                cursorBuffer.append("NoOverflowDetected:\n");
+                
                 break;
             case (Parser.FLOAT)://32b -3.4E38 to 3.4E38
                 cursorBuffer.append("fld @" + op1 + "\n");
@@ -400,10 +417,7 @@ private Integer generarCodigoDivision(Short tipo, String op1, String op2) throws
                 break;
             case "==":
                 // agregar je, jpm y tagnuevo
-                cursorBuffer.append("je label" + label + "\n");
-                cursorBuffer.append("jmp " + tag + "\n");
-                cursorBuffer.append("label" + label + ":\n");
-                label++;
+                cursorBuffer.append("jne " + tag + "\n");
                 break;
             case "<":
                 cursorBuffer.append("jg " + tag + "\n");
