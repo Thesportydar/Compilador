@@ -35,9 +35,15 @@ public class FuncionesAuxiliares {
         }
     }
 
-    public static void loadMatrixs(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String filename, SymbolTable st, List<String> erroresLexicos) {
+    public static void loadMatrixs(TransitionMatrix<Integer> mI, TransitionMatrix<AccionSemantica> mA, String resourceName, SymbolTable st, List<String> erroresLexicos) {
         try {
-            Scanner scanner = new Scanner(new File(filename));
+            InputStream resourceStream = FuncionesAuxiliares.class.getClassLoader().getResourceAsStream(resourceName);
+
+            if (resourceStream == null) {
+                throw new FileNotFoundException("Recurso no encontrado: " + resourceName);
+            }
+
+            Scanner scanner = new Scanner(resourceStream);
             scanner.useDelimiter(";");
 
             for (int row = 0; row < mI.getRows(); row++)
@@ -60,8 +66,8 @@ public class FuncionesAuxiliares {
                 }
 
             scanner.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("File not found: " + filename);
+        } catch (Exception e) {
+            erroresLexicos.add("Error al cargar la matriz desde el recurso: " + resourceName + ". " + e.getMessage());
         }
     }
 }

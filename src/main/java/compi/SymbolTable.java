@@ -171,6 +171,31 @@ public class SymbolTable {
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Semantic Table:\n");
+        sb.append("Ptr\tTokenID\tLexema\tAttributes\n");
+
+        for (HashMap.Entry<Integer, SymbolTableEntry> entry : symbolTable.entrySet()) {
+            String valid = getAttribute(entry.getKey(), "valid");
+            if (valid != null && valid.equals("0")) {
+                continue;
+            }
+            sb.append(entry.getKey()).append("\t");
+            sb.append(entry.getValue().tokenId).append("\t");
+            sb.append(entry.getValue().lexema).append("\t");
+
+            for (HashMap.Entry<String, String> attribute : entry.getValue().attributes.entrySet()) {
+                sb.append(attribute.getKey()).append(": ").append(attribute.getValue()).append("\t");
+            }
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+
     // implemetar un metodo para que puede ser iterada con un foreach
     public Set<Integer> keySet() {
         return symbolTable.keySet();

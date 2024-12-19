@@ -1,14 +1,13 @@
 package compi;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 import compi.AccionesSemanticas.AccionSemantica;
 
 public class LexicalAnalyzer {
-    private FileReader reader;
+    private Reader reader;
     private TransitionMatrix<Integer> stateMatrix;
     private TransitionMatrix<AccionSemantica> accionMatrix;
     private List<String> errores;
@@ -21,8 +20,8 @@ public class LexicalAnalyzer {
     HashMap<Character, Integer> charMap;
     HashMap<String, Integer> RESERVED_WORDS;
 
-    static final String charmap_file = "char_map.csv";
-    static final String reserved_words_file = "reserved_words.csv";
+    static final String CHARMAP_FILE = "char_map.csv";
+    static final String RESERVED_WORDS_FILE = "reserved_words.csv";
 
 
     public LexicalAnalyzer(String sourceFile, TransitionMatrix<Integer> stateMatrix,
@@ -34,14 +33,19 @@ public class LexicalAnalyzer {
         ptrActual = 0;
 
         try {
-            reader = new FileReader(sourceFile);
+            InputStream sourceStream = getClass().getClassLoader().getResourceAsStream(sourceFile);
+            if (sourceStream == null) {
+                throw new IllegalArgumentException("Archivo fuente no encontrado: " + sourceFile);
+            }
+            reader = new InputStreamReader(sourceStream);
+
             currentChar = reader.read();
 
             charMap = new HashMap<Character, Integer>();
             RESERVED_WORDS = new HashMap<String, Integer>();
 
-            loadCharMap(charMap, charmap_file);
-            loadReservedWords(RESERVED_WORDS, reserved_words_file);
+            loadCharMap(charMap, CHARMAP_FILE);
+            loadReservedWords(RESERVED_WORDS, RESERVED_WORDS_FILE);
 
             if (isWindows)
                 charMap.put('\r', 23);
@@ -163,9 +167,12 @@ public class LexicalAnalyzer {
         }
     }
 
-    private void loadCharMap(HashMap<Character, Integer> map, String file) {
-        try {
-            Scanner scanner = new Scanner(new File(file));
+    private void loadCharMap(HashMap<Character, Integer> map, String resourceName) {
+        try (InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(resourceName);
+             Scanner scanner = new Scanner(resourceStream)) {
+            if (resourceStream == null) {
+                throw new FileNotFoundException("Recurso no encontrado: " + resourceName);
+            }
             scanner.useDelimiter(",|" + eol);
 
             while (scanner.hasNext()) {
@@ -180,8 +187,8 @@ public class LexicalAnalyzer {
                 //print mappedChar and the type of the class of mappedChar
                 map.put(c, mappedChar);
             }
-        } catch (FileNotFoundException e) {
-            System.out.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error al cargar charmap: " + e.getMessage());
         }
     }
 
@@ -193,9 +200,12 @@ public class LexicalAnalyzer {
         return null;
     }
 
-    private void loadReservedWords(HashMap<String, Integer> map, String file) {
-        try {
-            Scanner scanner = new Scanner(new File(file));
+    private void loadReservedWords(HashMap<String, Integer> map, String resourceName) {
+        try (InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(resourceName);
+             Scanner scanner = new Scanner(resourceStream)) {
+            if (resourceStream == null) {
+                throw new FileNotFoundException("Recurso no encontrado: " + resourceName);
+            }
             scanner.useDelimiter(",|" + eol);
 
             while (scanner.hasNext()) {
@@ -203,12 +213,12 @@ public class LexicalAnalyzer {
                 int mappedChar = scanner.nextInt();
                 map.put(s, mappedChar);
             }
-        } catch (FileNotFoundException e) {
-            System.out.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error al cargar reserved words: " + e.getMessage());
         }
     }
 
     public static void main(String[] args) {
-        LexicalAnalyzer analyzer = new LexicalAnalyzer("test.csv", null, null, null);
+        LexicalAnalyzer analyzer = new LexicalAnalyzer("transition_matrix.csv", null, null, null);
     }
 }
